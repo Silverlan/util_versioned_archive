@@ -7,13 +7,13 @@
 #include <sharedutils/util_file.h>
 #include <sharedutils/util_string.h>
 #include <iostream>
-#pragma warning(disable: 4307)
+/*#pragma warning(disable: 4307)
 #pragma warning(disable: 4800)
 #pragma warning(disable: 4701)
 #include <boost/crc.hpp>
 #pragma warning(default: 4701)
 #pragma warning(default: 4800)
-#pragma warning(default: 4307)
+#pragma warning(default: 4307)*/
 
 #undef WIN32
 
@@ -229,7 +229,7 @@ uva::ArchiveFile::UpdateResult uva::ArchiveFile::PublishUpdate(
 			else
 			{
 				//std::cout<<"DATA: "<<data<<std::endl;
-				boost::crc_32_type crc;
+				/*boost::crc_32_type crc;
 				crc.process_bytes(data.data(),info->sizeUncompressed);
 				bool bSkip = false;
 				if(bExists) // Compare with existing version
@@ -282,7 +282,7 @@ uva::ArchiveFile::UpdateResult uva::ArchiveFile::PublishUpdate(
 //#endif
 						info->size = 0;
 					}
-				}
+				}*/
 			}
 		}
 		else
