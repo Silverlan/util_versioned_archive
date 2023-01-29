@@ -18,7 +18,7 @@
 #undef WIN32
 
 extern "C" {
-	#include "bzlib.h"
+#include "bzlib.h"
 }
 #ifdef UVA_VERBOSE
 #include <iostream>
@@ -26,53 +26,41 @@ extern "C" {
 
 std::string uva::ArchiveFile::result_code_to_string(UpdateResult code)
 {
-	switch(code)
-	{
-		case UpdateResult::Success:
-			return "Success";
-		case UpdateResult::ListFileNotFound:
-			return "List file not found";
-		case UpdateResult::NothingToUpdate:
-			return "Nothing to update";
-		case UpdateResult::UnableToCreateArchiveFile:
-			return "Unable to create archive file";
-		case UpdateResult::VersionDiscrepancy:
-			return "Version discrepancy";
-		case UpdateResult::UnableToRemoveTemporaryFiles:
-			return "Unable to remove temporary files";
-		default:
-			return "Unknown";
+	switch(code) {
+	case UpdateResult::Success:
+		return "Success";
+	case UpdateResult::ListFileNotFound:
+		return "List file not found";
+	case UpdateResult::NothingToUpdate:
+		return "Nothing to update";
+	case UpdateResult::UnableToCreateArchiveFile:
+		return "Unable to create archive file";
+	case UpdateResult::VersionDiscrepancy:
+		return "Version discrepancy";
+	case UpdateResult::UnableToRemoveTemporaryFiles:
+		return "Unable to remove temporary files";
+	default:
+		return "Unknown";
 	}
 }
 
-uva::ArchiveFile::UpdateResult uva::ArchiveFile::PublishUpdate(
-	const std::string &filePath,
-	util::Version &version,
-	std::vector<PublishInfo> &files,
-	const std::string &updateFile,
-	const std::function<bool(VFilePtr&)> &readCallback,
-	const std::function<bool(VFilePtrReal&)> &writeCallback,
-	const std::function<void(std::string&,std::string&,std::vector<uint8_t>&)> &dataTranslateCallback
-)
+uva::ArchiveFile::UpdateResult uva::ArchiveFile::PublishUpdate(const std::string &filePath, util::Version &version, std::vector<PublishInfo> &files, const std::string &updateFile, const std::function<bool(VFilePtr &)> &readCallback, const std::function<bool(VFilePtrReal &)> &writeCallback,
+  const std::function<void(std::string &, std::string &, std::vector<uint8_t> &)> &dataTranslateCallback)
 {
-	auto f = std::unique_ptr<ArchiveFile>(uva::ArchiveFile::Open(updateFile,readCallback,writeCallback));
+	auto f = std::unique_ptr<ArchiveFile>(uva::ArchiveFile::Open(updateFile, readCallback, writeCallback));
 	if(f == nullptr)
 		return UpdateResult::UnableToCreateArchiveFile;
 	auto lastVersion = version;
-	if(f->GetLatestVersion(&lastVersion) == true && version <= lastVersion && version != util::Version{})
-	{
+	if(f->GetLatestVersion(&lastVersion) == true && version <= lastVersion && version != util::Version {}) {
 #ifdef UVA_VERBOSE
-		std::cout<<"WARNING: New version ("<<version.ToString()<<") is lower or equal to existing version ("<<lastVersion.ToString()<<")"<<std::endl;
+		std::cout << "WARNING: New version (" << version.ToString() << ") is lower or equal to existing version (" << lastVersion.ToString() << ")" << std::endl;
 #endif
 		return UpdateResult::VersionDiscrepancy;
 	}
-	if(version == util::Version{})
-	{
+	if(version == util::Version {}) {
 		version = lastVersion;
-		if(version.revision +1 >= 10)
-		{
-			if(version.minor +1 >= 10)
-			{
+		if(version.revision + 1 >= 10) {
+			if(version.minor + 1 >= 10) {
 				++version.major;
 				version.minor = 0;
 			}
@@ -85,31 +73,25 @@ uva::ArchiveFile::UpdateResult uva::ArchiveFile::PublishUpdate(
 	}
 
 	// Normalize Paths
-	for(auto &f : files)
-	{
+	for(auto &f : files) {
 		auto &name = f.file;
 		name = FileManager::GetCanonicalizedPath(name);
 		//std::transform(name.begin(),name.end(),name.begin(),::tolower);
 	}
 
 	// Remove duplicates
-	for(unsigned int i=static_cast<unsigned int>(files.size()) -1;i>=1;i--)
-	{
-		for(unsigned int j=i -1;j!=(unsigned int)-1;j--)
-		{
+	for(unsigned int i = static_cast<unsigned int>(files.size()) - 1; i >= 1; i--) {
+		for(unsigned int j = i - 1; j != (unsigned int)-1; j--) {
 			if(files[i] == files[j])
-				files.erase(files.begin() +i);
+				files.erase(files.begin() + i);
 		}
 	}
 	// Move changelog to top
-	auto it = std::find_if(files.begin(),files.end(),[](const PublishInfo &info) {
-		return (info.GetSourceName() == "changelog.txt") ? true : false;
-	});
-	if(it != files.end())
-	{
+	auto it = std::find_if(files.begin(), files.end(), [](const PublishInfo &info) { return (info.GetSourceName() == "changelog.txt") ? true : false; });
+	if(it != files.end()) {
 		auto v = *it;
 		files.erase(it);
-		files.insert(files.begin(),v);
+		files.insert(files.begin(), v);
 	}
 	VersionInfo newVersionInfo;
 	newVersionInfo.version = version;
@@ -142,55 +124,48 @@ uva::ArchiveFile::UpdateResult uva::ArchiveFile::PublishUpdate(
 	uint32_t numAdded = 0;
 	uint32_t numChanged = 0;
 	uint32_t numDeleted = 0;
-	for(auto &file : files)
-	{
+	for(auto &file : files) {
 		auto srcName = file.GetSourceName();
 
 		uint64_t size = 0;
 		uint64_t sizeUncompressed = 0;
 		std::vector<uint8_t> data;
-		auto fptr = FileManager::OpenSystemFile(file.file.c_str(),"rb");
-		if(fptr != nullptr)
-		{
+		auto fptr = FileManager::OpenSystemFile(file.file.c_str(), "rb");
+		if(fptr != nullptr) {
 			sizeUncompressed = fptr->GetSize();
-			if(sizeUncompressed == 0)
-			{
+			if(sizeUncompressed == 0) {
 				size = 0;
-//#ifdef UVA_VERBOSE
-				std::cout<<"Marked file '"<<file.file<<"' for deletion!"<<std::endl;
+				//#ifdef UVA_VERBOSE
+				std::cout << "Marked file '" << file.file << "' for deletion!" << std::endl;
 				++numDeleted;
-//#endif
+				//#endif
 			}
-			else
-			{
+			else {
 				data.resize(sizeUncompressed);
-				fptr->Read(data.data(),sizeUncompressed);
+				fptr->Read(data.data(), sizeUncompressed);
 
-				if(dataTranslateCallback != nullptr)
-				{
-					dataTranslateCallback(file.file,srcName,data);
+				if(dataTranslateCallback != nullptr) {
+					dataTranslateCallback(file.file, srcName, data);
 					sizeUncompressed = data.size();
 				}
 			}
 		}
 
-		auto *info = f->FindFile(srcName,idx);
+		auto *info = f->FindFile(srcName, idx);
 		auto bExists = (info != nullptr) ? true : false;
-		if(info != nullptr)
-		{
+		if(info != nullptr) {
 			newVersionInfo.files.push_back(idx);
 #ifdef UVA_VERBOSE
-			std::cout<<"Adding existing file "<<idx<<" to update"<<std::endl;
+			std::cout << "Adding existing file " << idx << " to update" << std::endl;
 #endif
 		}
-		if(info == nullptr)
-		{
-			info = f->AddFile(srcName,idx);
+		if(info == nullptr) {
+			info = f->AddFile(srcName, idx);
 			newVersionInfo.files.push_back(idx);
-//#ifdef UVA_VERBOSE
+			//#ifdef UVA_VERBOSE
 			++numAdded;
-			std::cout<<"Adding new file '"<<srcName<<"' to update"<<std::endl;
-//#endif
+			std::cout << "Adding new file '" << srcName << "' to update" << std::endl;
+			//#endif
 		}
 		/*FileInfo *info = nullptr;
 		bool bExists = false;
@@ -215,19 +190,16 @@ uva::ArchiveFile::UpdateResult uva::ArchiveFile::PublishUpdate(
 		//info->name = file.GetSourceName();
 		info->flags |= FileInfo::os_to_flags(file.os);
 
-		if(fptr != nullptr)
-		{
+		if(fptr != nullptr) {
 			info->sizeUncompressed = sizeUncompressed;
-			if(info->sizeUncompressed == 0)
-			{
+			if(info->sizeUncompressed == 0) {
 				info->size = 0;
-//#ifdef UVA_VERBOSE
-				std::cout<<"Marked file '"<<file.file<<"' for deletion!"<<std::endl;
-//#endif
+				//#ifdef UVA_VERBOSE
+				std::cout << "Marked file '" << file.file << "' for deletion!" << std::endl;
+				//#endif
 				++numDeleted;
 			}
-			else
-			{
+			else {
 				//std::cout<<"DATA: "<<data<<std::endl;
 				/*boost::crc_32_type crc;
 				crc.process_bytes(data.data(),info->sizeUncompressed);
@@ -285,58 +257,52 @@ uva::ArchiveFile::UpdateResult uva::ArchiveFile::PublishUpdate(
 				}*/
 			}
 		}
-		else
-		{
+		else {
 			info->size = 0;
 			info->sizeUncompressed = 0;
-//#ifdef UVA_VERBOSE
-			std::cout<<"Marked file '"<<file.file<<"' for deletion!"<<std::endl;
+			//#ifdef UVA_VERBOSE
+			std::cout << "Marked file '" << file.file << "' for deletion!" << std::endl;
 			++numDeleted;
-//#endif
+			//#endif
 		}
 	}
 
 	// Check for removed files, has to be done after data translation!
 	auto &root = f->GetRoot();
-	std::function<void(uva::ArchiveFile::FileIndexInfo&,std::string)> fIterateHierarchy = nullptr;
-	fIterateHierarchy = [&fIterateHierarchy,&f,&files,&newVersionInfo,&numDeleted](uva::ArchiveFile::FileIndexInfo &fii,std::string path) {
+	std::function<void(uva::ArchiveFile::FileIndexInfo &, std::string)> fIterateHierarchy = nullptr;
+	fIterateHierarchy = [&fIterateHierarchy, &f, &files, &newVersionInfo, &numDeleted](uva::ArchiveFile::FileIndexInfo &fii, std::string path) {
 		if(path.empty() == false)
 			path += "\\";
 		auto fi = f->GetByIndex(fii.index);
 		path += fi->name;
-		if(fi->IsDirectory() == false && fi->size > 0)
-		{
-			auto it = std::find_if(files.begin(),files.end(),[&path](const PublishInfo &pi) {
-				return ustring::compare(path,pi.GetSourceName(),false);
-			});
-			if(it == files.end())
-			{
+		if(fi->IsDirectory() == false && fi->size > 0) {
+			auto it = std::find_if(files.begin(), files.end(), [&path](const PublishInfo &pi) { return ustring::compare(path, pi.GetSourceName(), false); });
+			if(it == files.end()) {
 				newVersionInfo.files.push_back(static_cast<unsigned int>(fii.index));
 				fi->size = 0;
 				++numDeleted;
 #ifdef UVA_VERBOSE
-				std::cout<<"Marked file '"<<fi->name<<"' for deletion!"<<std::endl;
+				std::cout << "Marked file '" << fi->name << "' for deletion!" << std::endl;
 #endif
 			}
 		}
 		for(auto &child : fii.children)
-			fIterateHierarchy(*child,path);
+			fIterateHierarchy(*child, path);
 	};
-	fIterateHierarchy(root,"");
+	fIterateHierarchy(root, "");
 
-	if(numAdded == 0 && numChanged == 0 && numDeleted == 0)
-	{
+	if(numAdded == 0 && numChanged == 0 && numDeleted == 0) {
 #ifdef UVA_VERBOSE
-		std::cout<<"WARNING: Nothing to update!"<<std::endl;
+		std::cout << "WARNING: Nothing to update!" << std::endl;
 #endif
 		return UpdateResult::NothingToUpdate;
 	}
-//#ifdef UVA_VERBOSE
-	std::cout<<numUnchanged<<" files are unchanged and have been skipped!"<<std::endl;
-	std::cout<<numAdded<<" files have been added!"<<std::endl;
-	std::cout<<numChanged<<" files have been changed!"<<std::endl;
-	std::cout<<numDeleted<<" files have been deleted!"<<std::endl;
-//#endif
+	//#ifdef UVA_VERBOSE
+	std::cout << numUnchanged << " files are unchanged and have been skipped!" << std::endl;
+	std::cout << numAdded << " files have been added!" << std::endl;
+	std::cout << numChanged << " files have been changed!" << std::endl;
+	std::cout << numDeleted << " files have been deleted!" << std::endl;
+	//#endif
 	//for(unsigned int i=0;i<newVersionInfo.files.size();i++)
 	//	std::cout<<"FILE: "<<newVersionInfo.files[i]<<std::endl;
 	/*if(newVersionInfo.files.empty())
@@ -347,85 +313,72 @@ uva::ArchiveFile::UpdateResult uva::ArchiveFile::PublishUpdate(
 		return UpdateResult::NothingToUpdate;
 	}*/
 	f->AddVersion(newVersionInfo);
-	if(f->Export() == false)
-	{
+	if(f->Export() == false) {
 #ifdef UVA_VERBOSE
-		std::cout<<"WARNING: Unable to rename versioninfo_tmp.dat"<<std::endl;
+		std::cout << "WARNING: Unable to rename versioninfo_tmp.dat" << std::endl;
 #endif
 		return UpdateResult::UnableToRemoveTemporaryFiles;
 	}
 #ifdef UVA_VERBOSE
-	std::cout<<"Publishing was successful! "<<newVersionInfo.files.size()<<" files have been updated."<<std::endl;
+	std::cout << "Publishing was successful! " << newVersionInfo.files.size() << " files have been updated." << std::endl;
 #endif
 	return UpdateResult::Success;
 }
 
-static void find_all_files(std::string path,const std::function<void(std::string,std::string)> &f)
+static void find_all_files(std::string path, const std::function<void(std::string, std::string)> &f)
 {
 	path = FileManager::GetCanonicalizedPath(path);
 	std::vector<std::string> files;
 	std::vector<std::string> dirs;
-	FileManager::FindSystemFiles((path +"/*").c_str(),&files,&dirs);
-	for(auto it=files.begin();it!=files.end();++it)
-		f(path +std::string("/"),*it);
-	for(auto it=dirs.begin();it!=dirs.end();++it)
-		find_all_files(path +std::string("/") +(*it),f);
+	FileManager::FindSystemFiles((path + "/*").c_str(), &files, &dirs);
+	for(auto it = files.begin(); it != files.end(); ++it)
+		f(path + std::string("/"), *it);
+	for(auto it = dirs.begin(); it != dirs.end(); ++it)
+		find_all_files(path + std::string("/") + (*it), f);
 }
 
-uva::ArchiveFile::UpdateResult uva::ArchiveFile::PublishUpdate(
-	util::Version &version,
-	const std::string &updateListFile,
-	const std::string &archiveFile,
-	const std::function<bool(VFilePtr&)> &readCallback,
-	const std::function<bool(VFilePtrReal&)> &writeCallback,
-	const std::function<void(std::string&,std::string&,std::vector<uint8_t>&)> &dataTranslateCallback
-)
+uva::ArchiveFile::UpdateResult uva::ArchiveFile::PublishUpdate(util::Version &version, const std::string &updateListFile, const std::string &archiveFile, const std::function<bool(VFilePtr &)> &readCallback, const std::function<bool(VFilePtrReal &)> &writeCallback,
+  const std::function<void(std::string &, std::string &, std::vector<uint8_t> &)> &dataTranslateCallback)
 {
 	auto flist = updateListFile;
 	std::string ext;
-	if(ufile::get_extension(flist,&ext) == false)
+	if(ufile::get_extension(flist, &ext) == false)
 		flist += ".txt";
 	std::string pathToFiles;
-	auto f = FileManager::OpenFile<VFilePtrReal>(flist.c_str(),"r");
-	if(f == nullptr)
-	{
-		f = FileManager::OpenSystemFile(flist.c_str(),"r");
+	auto f = FileManager::OpenFile<VFilePtrReal>(flist.c_str(), "r");
+	if(f == nullptr) {
+		f = FileManager::OpenSystemFile(flist.c_str(), "r");
 		if(f == nullptr)
 			return UpdateResult::ListFileNotFound;
 		pathToFiles = ufile::get_path_from_filename(flist);
 	}
 	else
-		pathToFiles = FileManager::GetProgramPath() +ufile::get_path_from_filename(flist);
+		pathToFiles = FileManager::GetProgramPath() + ufile::get_path_from_filename(flist);
 	auto c = FileManager::GetDirectorySeparator();
 	if(pathToFiles.empty() == false && pathToFiles.back() != c)
 		pathToFiles += c;
 	std::vector<PublishInfo> fileInfo;
-	while(!f->Eof())
-	{
+	while(!f->Eof()) {
 		std::string l = f->ReadLine();
 		std::vector<std::string> argv = ustring::get_args(l);
-		if(!argv.empty())
-		{
-			auto f = pathToFiles +argv.front();
+		if(!argv.empty()) {
+			auto f = pathToFiles + argv.front();
 			f = FileManager::GetCanonicalizedPath(f);
-			std::unordered_map<std::string,std::string> keyvalues;
-			for(auto i=1;i<argv.size();i++)
-			{
+			std::unordered_map<std::string, std::string> keyvalues;
+			for(auto i = 1; i < argv.size(); i++) {
 				std::string &str = argv[i];
 				std::vector<std::string> strSub;
-				ustring::explode(str,"=",strSub);
-				if(strSub.size() > 1)
-				{
+				ustring::explode(str, "=", strSub);
+				if(strSub.size() > 1) {
 					ustring::remove_whitespace(strSub[0]);
 					ustring::remove_whitespace(strSub[1]);
 					if(!strSub[0].empty() && !strSub[1].empty())
-						keyvalues.insert(std::unordered_map<std::string,std::string>::value_type(strSub[0],strSub[1]));
+						keyvalues.insert(std::unordered_map<std::string, std::string>::value_type(strSub[0], strSub[1]));
 				}
 			}
 			P_OS os = P_OS::All;
 			auto itOS = keyvalues.find("os");
-			if(itOS != keyvalues.end())
-			{
+			if(itOS != keyvalues.end()) {
 				auto &strOS = itOS->second;
 				if(strOS == "win32")
 					os = P_OS::Win32;
@@ -441,31 +394,28 @@ uva::ArchiveFile::UpdateResult uva::ArchiveFile::PublishUpdate(
 			if(itSrc != keyvalues.end())
 				src = itSrc->second;
 			std::string sub;
-			if(f.length() > 3 && ((sub = f.substr(f.length() -3)) == "/**" || sub == "\\**") && FileManager::IsSystemDir(f.substr(0,f.length() -3)) == true)
-			{
-				f = f.substr(0,f.length() -3);
+			if(f.length() > 3 && ((sub = f.substr(f.length() - 3)) == "/**" || sub == "\\**") && FileManager::IsSystemDir(f.substr(0, f.length() - 3)) == true) {
+				f = f.substr(0, f.length() - 3);
 				auto fLen = f.length();
-				find_all_files(f,[&fileInfo,&os,&src,&fLen](std::string path,std::string file) {
-					auto localPath = path.substr(fLen +1,path.length());
-					if(!localPath.empty())
-					{
-						localPath = "/" +localPath;
+				find_all_files(f, [&fileInfo, &os, &src, &fLen](std::string path, std::string file) {
+					auto localPath = path.substr(fLen + 1, path.length());
+					if(!localPath.empty()) {
+						localPath = "/" + localPath;
 						if(localPath.back() == '/' || localPath.back() == '\\')
-							localPath = localPath.substr(0,localPath.length() -1);
+							localPath = localPath.substr(0, localPath.length() - 1);
 					}
-					fileInfo.push_back(PublishInfo(FileManager::GetCanonicalizedPath(path +file),os,FileManager::GetCanonicalizedPath(src +localPath)));
+					fileInfo.push_back(PublishInfo(FileManager::GetCanonicalizedPath(path + file), os, FileManager::GetCanonicalizedPath(src + localPath)));
 				});
 			}
-			else
-			{
+			else {
 				std::vector<std::string> files;
-				FileManager::FindSystemFiles(f.c_str(),&files,nullptr,true);
-				for(auto it=files.begin();it!=files.end();it++)
-					fileInfo.push_back(PublishInfo(ufile::get_path_from_filename(f) +*it,os,src));
+				FileManager::FindSystemFiles(f.c_str(), &files, nullptr, true);
+				for(auto it = files.begin(); it != files.end(); it++)
+					fileInfo.push_back(PublishInfo(ufile::get_path_from_filename(f) + *it, os, src));
 			}
 		}
 	}
 	if(fileInfo.empty())
 		return UpdateResult::NothingToUpdate;
-	return PublishUpdate(pathToFiles,version,fileInfo,archiveFile,readCallback,writeCallback,dataTranslateCallback);
+	return PublishUpdate(pathToFiles, version, fileInfo, archiveFile, readCallback, writeCallback, dataTranslateCallback);
 }

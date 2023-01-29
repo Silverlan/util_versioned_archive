@@ -8,8 +8,7 @@
 #include <vector>
 #include <sharedutils/util_version.h>
 
-struct VersionInfo
-{
+struct VersionInfo {
 	util::Version version;
 	std::vector<uint32_t> files;
 };

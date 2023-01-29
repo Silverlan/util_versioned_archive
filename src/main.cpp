@@ -7,38 +7,36 @@
 #include "uva_archive_file.hpp"
 #include <iostream>
 
-int main(int argc,char *argv[])
+int main(int argc, char *argv[])
 {
-	util::Version version {0,0,2};
-	auto r = uva::ArchiveFile::PublishUpdate(version,"updatelist.txt","versioninfo.dat");
-	std::cout<<"Result: "<<uva::ArchiveFile::result_code_to_string(r)<<std::endl;
+	util::Version version {0, 0, 2};
+	auto r = uva::ArchiveFile::PublishUpdate(version, "updatelist.txt", "versioninfo.dat");
+	std::cout << "Result: " << uva::ArchiveFile::result_code_to_string(r) << std::endl;
 
 	//static bool publish(const util::Version &version,std::string list="updatelist.txt",char *err=nullptr,const std::string &updateFile="versioninfo.dat");
 
 	auto f = std::unique_ptr<uva::ArchiveFile>(uva::ArchiveFile::Open("versioninfo.dat"));
 	auto &versions = f->GetVersions();
-	std::cout<<versions.size()<<" versions:"<<std::endl;
-	for(auto &v : versions)
-	{
-		std::cout<<v.version.ToString()<<std::endl;
-		for(auto idx : v.files)
-		{
+	std::cout << versions.size() << " versions:" << std::endl;
+	for(auto &v : versions) {
+		std::cout << v.version.ToString() << std::endl;
+		for(auto idx : v.files) {
 			auto fi = f->GetByIndex(idx);
-			std::cout<<"\t"<<idx<<" ("<<((fi != nullptr) ? (fi->name) : "Invalid")<<")"<<std::endl;
+			std::cout << "\t" << idx << " (" << ((fi != nullptr) ? (fi->name) : "Invalid") << ")" << std::endl;
 			//std::cout<<"\t"<<idx<<" ("<<((fi != nullptr) ? (fi->GetFullPath() +fi->name) : "Invalid")<<")"<<std::endl;
 		}
 	}
 
-	std::cout<<"\nHierarchy:"<<std::endl;
+	std::cout << "\nHierarchy:" << std::endl;
 	auto &root = f->GetRoot();
-	std::function<void(uva::ArchiveFile::FileIndexInfo&,const std::string&)> fIterateHierarchy = nullptr;
-	fIterateHierarchy = [&f,&fIterateHierarchy](uva::ArchiveFile::FileIndexInfo &fii,const std::string &t) {
+	std::function<void(uva::ArchiveFile::FileIndexInfo &, const std::string &)> fIterateHierarchy = nullptr;
+	fIterateHierarchy = [&f, &fIterateHierarchy](uva::ArchiveFile::FileIndexInfo &fii, const std::string &t) {
 		auto &fi = f->GetByIndex(fii.index);
-		std::cout<<t<<fii.index<<": "<<fi->name<<" ("<<fi->size<<") ("<<fi->IsDirectory()<<")"<<std::endl;
+		std::cout << t << fii.index << ": " << fi->name << " (" << fi->size << ") (" << fi->IsDirectory() << ")" << std::endl;
 		for(auto &child : fii.children)
-			fIterateHierarchy(*child,t +'\t');
+			fIterateHierarchy(*child, t + '\t');
 	};
-	fIterateHierarchy(root,"\t");
+	fIterateHierarchy(root, "\t");
 	/*auto &files = f->GetFiles();
 	for(auto &f : files)
 	{
@@ -55,24 +53,23 @@ int main(int argc,char *argv[])
 
 	//
 
-	version = {0,0,0};
+	version = {0, 0, 0};
 	std::vector<uint32_t> fileIds;
-	for(auto &versionInfo : versions)
-	{
-		if(version < versionInfo.version)
-		{
-			fileIds.reserve(fileIds.size() +versionInfo.files.size());
+	for(auto &versionInfo : versions) {
+		if(version < versionInfo.version) {
+			fileIds.reserve(fileIds.size() + versionInfo.files.size());
 			for(auto idx : versionInfo.files)
 				fileIds.push_back(idx);
 		}
 	}
 
-	std::cout<<"Extracting..."<<std::endl;
+	std::cout << "Extracting..." << std::endl;
 	//f->Extract("test_extract");
 	f->ExtractFile("models/props/metal_fence01.wmd");
-	std::cout<<"All files have been extracted!"<<std::endl;
+	std::cout << "All files have been extracted!" << std::endl;
 
-	for(;;);
+	for(;;)
+		;
 	return EXIT_SUCCESS;
 }
 #endif

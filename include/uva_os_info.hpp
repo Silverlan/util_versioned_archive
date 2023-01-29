@@ -12,15 +12,7 @@
 #undef WIN32
 #undef WIN64
 
-enum class P_OS : uint8_t
-{
-	Invalid = 0,
-	All,
-	Win32,
-	Win64,
-	Lin32,
-	Lin64
-};
+enum class P_OS : uint8_t { Invalid = 0, All, Win32, Win64, Lin32, Lin64 };
 
 std::string p_os_to_string(P_OS os);
 P_OS get_active_system();

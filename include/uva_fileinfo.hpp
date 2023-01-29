@@ -9,23 +9,12 @@
 #include "uva_definitions.hpp"
 #include <string>
 
-namespace uva
-{
-	struct DLLUVA FileInfo
-	{
-		enum class Flags : uint32_t
-		{
-			None = 0,
-			Directory = 1,
-			Windows = Directory<<1,
-			Linux = Windows<<1,
-			x86 = Linux<<1,
-			x64 = x86<<1,
-			AllOS = Windows | Linux | x86 | x64
-		};
+namespace uva {
+	struct DLLUVA FileInfo {
+		enum class Flags : uint32_t { None = 0, Directory = 1, Windows = Directory << 1, Linux = Windows << 1, x86 = Linux << 1, x64 = x86 << 1, AllOS = Windows | Linux | x86 | x64 };
 		static Flags os_to_flags(P_OS os);
 
-		FileInfo()=default;
+		FileInfo() = default;
 		std::string name;
 		int32_t crc = 0;
 		Flags flags = Flags::AllOS;
@@ -43,10 +32,9 @@ namespace uva
 };
 REGISTER_BASIC_BITWISE_OPERATORS(uva::FileInfo::Flags);
 
-struct PublishInfo
-{
-	PublishInfo(const std::string &file,P_OS os,const std::string &src);
-	PublishInfo()=default;
+struct PublishInfo {
+	PublishInfo(const std::string &file, P_OS os, const std::string &src);
+	PublishInfo() = default;
 	bool operator==(const PublishInfo &other) const;
 	bool operator!=(const PublishInfo &other) const;
 	bool operator==(const std::string &str) const;

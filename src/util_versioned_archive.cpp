@@ -6,7 +6,7 @@
 #include "uva_archive_file.hpp"
 #include <sharedutils/util_string.h>
 
-#pragma comment(lib,"vfilesystem.lib")
-#pragma comment(lib,"sharedutils.lib")
-#pragma comment(lib,"mathutil.lib")
-#pragma comment(lib,"bzip2.lib")
+#pragma comment(lib, "vfilesystem.lib")
+#pragma comment(lib, "sharedutils.lib")
+#pragma comment(lib, "mathutil.lib")
+#pragma comment(lib, "bzip2.lib")

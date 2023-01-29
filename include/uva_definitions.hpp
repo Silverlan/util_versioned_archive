@@ -6,19 +6,19 @@
 #define __UVA_DEFINITIONS_HPP__
 
 #ifdef UVA_STATIC
-	#define DLLUVA
+#define DLLUVA
 #elif UVA_DLL
-	#ifdef __linux__
-		#define DLLUVA __attribute__((visibility("default")))
-	#else
-		#define DLLUVA __declspec(dllexport)
-	#endif
+#ifdef __linux__
+#define DLLUVA __attribute__((visibility("default")))
 #else
-	#ifdef __linux__
-		#define DLLUVA
-	#else
-		#define DLLUVA __declspec(dllimport)
-	#endif
+#define DLLUVA __declspec(dllexport)
+#endif
+#else
+#ifdef __linux__
+#define DLLUVA
+#else
+#define DLLUVA __declspec(dllimport)
+#endif
 #endif
 
 #endif

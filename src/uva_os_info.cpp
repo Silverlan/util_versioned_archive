@@ -6,8 +6,7 @@
 
 std::string p_os_to_string(P_OS os)
 {
-	switch(os)
-	{
+	switch(os) {
 	case P_OS::All:
 		return "ALL";
 	case P_OS::Win32:
@@ -25,8 +24,7 @@ std::string p_os_to_string(P_OS os)
 
 P_OS get_active_system()
 {
-	if(util::is_linux_system())
-	{
+	if(util::is_linux_system()) {
 		if(util::is_x64_system())
 			return P_OS::Lin64;
 		return P_OS::Lin32;
