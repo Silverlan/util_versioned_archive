@@ -4,7 +4,7 @@ set(PROJ_NAME util_versioned_archive)
 pr_add_library(${PROJ_NAME} STATIC)
 
 pr_add_dependency(${PROJ_NAME} vfilesystem TARGET PUBLIC)
-pr_add_external_dependency(${PROJ_NAME} bzip2 LIBRARY)
+pr_add_dependency(${PROJ_NAME} libz2 TARGET)
 
 pr_add_headers(${PROJ_NAME} "include/")
 pr_add_sources(${PROJ_NAME} "src/")
