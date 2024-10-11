@@ -2,12 +2,15 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-#include "uva_fileinfo.hpp"
+module;
+
 #include <sharedutils/util_file.h>
 #include <sharedutils/util_string.h>
 #include <fsys/filesystem.h>
 
-uva::FileInfo::Flags uva::FileInfo::os_to_flags(P_OS os)
+module pragma.uva;
+
+pragma::uva::FileInfo::Flags pragma::uva::FileInfo::os_to_flags(P_OS os)
 {
 	switch(os) {
 	case P_OS::Win32:
@@ -28,10 +31,10 @@ uva::FileInfo::Flags uva::FileInfo::os_to_flags(P_OS os)
 	}
 	return Flags::None;
 }
-bool uva::FileInfo::IsDirectory() const { return (flags & Flags::Directory) != Flags::None; }
-bool uva::FileInfo::IsFile() const { return !IsDirectory(); }
-bool uva::FileInfo::IsCompressed() const { return true; }
-bool uva::FileInfo::operator==(P_OS os) const
+bool pragma::uva::FileInfo::IsDirectory() const { return (flags & Flags::Directory) != Flags::None; }
+bool pragma::uva::FileInfo::IsFile() const { return !IsDirectory(); }
+bool pragma::uva::FileInfo::IsCompressed() const { return true; }
+bool pragma::uva::FileInfo::operator==(P_OS os) const
 {
 	auto osFlags = flags & Flags::AllOS;
 	switch(os) {
@@ -49,24 +52,24 @@ bool uva::FileInfo::operator==(P_OS os) const
 		return true;
 	}
 }
-bool uva::FileInfo::operator!=(P_OS os) const { return !(*this == os); }
+bool pragma::uva::FileInfo::operator!=(P_OS os) const { return !(*this == os); }
 
-PublishInfo::PublishInfo(const std::string &_file, P_OS _os, const std::string &_src) : file(_file), os(_os), src(_src) {}
-bool PublishInfo::operator==(const PublishInfo &other) const { return (this->file == other.file && this->os == other.os) ? true : false; }
-bool PublishInfo::operator!=(const PublishInfo &other) const { return (*this == other) ? false : true; }
-bool PublishInfo::operator==(const std::string &str) const { return (this->file == str) ? true : false; }
-bool PublishInfo::operator!=(const std::string &str) const { return (*this == str) ? false : true; }
-bool PublishInfo::operator==(const P_OS &os) const { return (this->os == os) ? true : false; }
-bool PublishInfo::operator!=(const P_OS &os) const { return (*this == os) ? false : true; }
-bool PublishInfo::operator==(const uva::FileInfo &info) const
+pragma::uva::PublishInfo::PublishInfo(const std::string &_file, P_OS _os, const std::string &_src) : file(_file), os(_os), src(_src) {}
+bool pragma::uva::PublishInfo::operator == (const PublishInfo &other) const { return (this->file == other.file && this->os == other.os) ? true : false; }
+bool pragma::uva::PublishInfo::operator!=(const PublishInfo &other) const { return (*this == other) ? false : true; }
+bool pragma::uva::PublishInfo::operator==(const std::string &str) const { return (this->file == str) ? true : false; }
+bool pragma::uva::PublishInfo::operator!=(const std::string &str) const { return (*this == str) ? false : true; }
+bool pragma::uva::PublishInfo::operator==(const P_OS &os) const { return (this->os == os) ? true : false; }
+bool pragma::uva::PublishInfo::operator!=(const P_OS &os) const { return (*this == os) ? false : true; }
+bool pragma::uva::PublishInfo::operator==(const pragma::uva::FileInfo &info) const
 {
-	if(uva::FileInfo::os_to_flags(os) != info.flags)
+	if(pragma::uva::FileInfo::os_to_flags(os) != info.flags)
 		return false;
 	std::string name = GetSourceName();
 	return (name == info.name) ? true : false;
 }
-bool PublishInfo::operator!=(const uva::FileInfo &info) const { return (*this == info) ? false : true; }
-std::string PublishInfo::GetSourceName() const
+bool pragma::uva::PublishInfo::operator!=(const pragma::uva::FileInfo &info) const { return (*this == info) ? false : true; }
+std::string pragma::uva::PublishInfo::GetSourceName() const
 {
 	std::string name = src;
 	auto bFileName = (name.find_first_of('.') != ustring::NOT_FOUND) ? true : false;

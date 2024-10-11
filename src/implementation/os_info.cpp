@@ -2,9 +2,14 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-#include "uva_os_info.hpp"
+module;
 
-std::string p_os_to_string(P_OS os)
+#include <string>
+#include <sharedutils/util.h>
+
+module pragma.uva;
+
+std::string pragma::uva::p_os_to_string(P_OS os)
 {
 	switch(os) {
 	case P_OS::All:
@@ -22,7 +27,7 @@ std::string p_os_to_string(P_OS os)
 	};
 }
 
-P_OS get_active_system()
+pragma::uva::P_OS pragma::uva::get_active_system()
 {
 	if(util::is_linux_system()) {
 		if(util::is_x64_system())

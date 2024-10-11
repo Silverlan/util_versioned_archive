@@ -2,15 +2,16 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-#ifndef __UVA_VERSION_INFO_HPP__
-#define __UVA_VERSION_INFO_HPP__
+module;
 
 #include <vector>
 #include <sharedutils/util_version.h>
 
-struct VersionInfo {
-	util::Version version;
-	std::vector<uint32_t> files;
-};
+export module pragma.uva:version_info;
 
-#endif
+export namespace pragma::uva {
+	struct VersionInfo {
+		util::Version version;
+		std::vector<uint32_t> files;
+	};
+};

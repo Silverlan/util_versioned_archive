@@ -2,8 +2,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-#ifndef __UVA_OS_INFO_HPP__
-#define __UVA_OS_INFO_HPP__
+module;
 
 #include <sharedutils/util.h>
 #include <string>
@@ -12,9 +11,11 @@
 #undef WIN32
 #undef WIN64
 
-enum class P_OS : uint8_t { Invalid = 0, All, Win32, Win64, Lin32, Lin64 };
+export module pragma.uva:os_info;
 
-std::string p_os_to_string(P_OS os);
-P_OS get_active_system();
+export namespace pragma::uva {
+	enum class P_OS : uint8_t { Invalid = 0, All, Win32, Win64, Lin32, Lin64 };
 
-#endif
+	std::string p_os_to_string(P_OS os);
+	P_OS get_active_system();
+};

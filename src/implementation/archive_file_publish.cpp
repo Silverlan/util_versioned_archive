@@ -2,10 +2,11 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-#include "uva_archive_file.hpp"
-#include "util_versioned_archive.hpp"
+module;
+
 #include <sharedutils/util_file.h>
 #include <sharedutils/util_string.h>
+#include <fsys/vfileptr.h>
 #include <iostream>
 /*#pragma warning(disable: 4307)
 #pragma warning(disable: 4800)
@@ -17,14 +18,15 @@
 
 #undef WIN32
 
-extern "C" {
-#include "bzlib.h"
-}
+#include "bzlib_wrapper.hpp"
+
 #ifdef UVA_VERBOSE
 #include <iostream>
 #endif
 
-std::string uva::ArchiveFile::result_code_to_string(UpdateResult code)
+module pragma.uva;
+
+std::string pragma::uva::ArchiveFile::result_code_to_string(UpdateResult code)
 {
 	switch(code) {
 	case UpdateResult::Success:
@@ -44,10 +46,10 @@ std::string uva::ArchiveFile::result_code_to_string(UpdateResult code)
 	}
 }
 
-uva::ArchiveFile::UpdateResult uva::ArchiveFile::PublishUpdate(const std::string &filePath, util::Version &version, std::vector<PublishInfo> &files, const std::string &updateFile, const std::function<bool(VFilePtr &)> &readCallback, const std::function<bool(VFilePtrReal &)> &writeCallback,
+pragma::uva::ArchiveFile::UpdateResult pragma::uva::ArchiveFile::PublishUpdate(const std::string &filePath, util::Version &version, std::vector<PublishInfo> &files, const std::string &updateFile, const std::function<bool(VFilePtr &)> &readCallback, const std::function<bool(VFilePtrReal &)> &writeCallback,
   const std::function<void(std::string &, std::string &, std::vector<uint8_t> &)> &dataTranslateCallback)
 {
-	auto f = std::unique_ptr<ArchiveFile>(uva::ArchiveFile::Open(updateFile, readCallback, writeCallback));
+	auto f = std::unique_ptr<ArchiveFile>(pragma::uva::ArchiveFile::Open(updateFile, readCallback, writeCallback));
 	if(f == nullptr)
 		return UpdateResult::UnableToCreateArchiveFile;
 	auto lastVersion = version;
@@ -269,8 +271,8 @@ uva::ArchiveFile::UpdateResult uva::ArchiveFile::PublishUpdate(const std::string
 
 	// Check for removed files, has to be done after data translation!
 	auto &root = f->GetRoot();
-	std::function<void(uva::ArchiveFile::FileIndexInfo &, std::string)> fIterateHierarchy = nullptr;
-	fIterateHierarchy = [&fIterateHierarchy, &f, &files, &newVersionInfo, &numDeleted](uva::ArchiveFile::FileIndexInfo &fii, std::string path) {
+	std::function<void(pragma::uva::ArchiveFile::FileIndexInfo &, std::string)> fIterateHierarchy = nullptr;
+	fIterateHierarchy = [&fIterateHierarchy, &f, &files, &newVersionInfo, &numDeleted](pragma::uva::ArchiveFile::FileIndexInfo &fii, std::string path) {
 		if(path.empty() == false)
 			path += "\\";
 		auto fi = f->GetByIndex(fii.index);
@@ -337,7 +339,7 @@ static void find_all_files(std::string path, const std::function<void(std::strin
 		find_all_files(path + std::string("/") + (*it), f);
 }
 
-uva::ArchiveFile::UpdateResult uva::ArchiveFile::PublishUpdate(util::Version &version, const std::string &updateListFile, const std::string &archiveFile, const std::function<bool(VFilePtr &)> &readCallback, const std::function<bool(VFilePtrReal &)> &writeCallback,
+pragma::uva::ArchiveFile::UpdateResult pragma::uva::ArchiveFile::PublishUpdate(util::Version &version, const std::string &updateListFile, const std::string &archiveFile, const std::function<bool(VFilePtr &)> &readCallback, const std::function<bool(VFilePtrReal &)> &writeCallback,
   const std::function<void(std::string &, std::string &, std::vector<uint8_t> &)> &dataTranslateCallback)
 {
 	auto flist = updateListFile;

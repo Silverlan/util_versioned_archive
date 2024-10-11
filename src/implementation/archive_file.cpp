@@ -2,20 +2,21 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-#include "uva_archive_file.hpp"
+module;
+
 #include <array>
 #include <sharedutils/util_string.h>
+#include <fsys/vfileptr.h>
 #include <iostream>
 #include <cstring>
+#include "bzlib_wrapper.hpp"
 
-extern "C" {
-#include "bzlib.h"
-}
+module pragma.uva;
 
 const std::array<char, 5> ARCHIVE_IDENT = {'V', 'A', 'R', 'C', 'H'};
 const uint32_t ARCHIVE_VERSION = 1;
 
-bool uva::ArchiveFile::ReadHeader()
+bool pragma::uva::ArchiveFile::ReadHeader()
 {
 	auto &f = m_in;
 	std::array<char, ARCHIVE_IDENT.size()> ident;
@@ -33,7 +34,7 @@ bool uva::ArchiveFile::ReadHeader()
 	return true;
 }
 
-void uva::ArchiveFile::ReadVersionLayer()
+void pragma::uva::ArchiveFile::ReadVersionLayer()
 {
 	auto &f = m_in;
 	if(f == nullptr)
@@ -52,7 +53,7 @@ void uva::ArchiveFile::ReadVersionLayer()
 	}
 }
 
-void uva::ArchiveFile::ReadFiles()
+void pragma::uva::ArchiveFile::ReadFiles()
 {
 	auto &f = m_in;
 	if(f == nullptr)
@@ -60,10 +61,10 @@ void uva::ArchiveFile::ReadFiles()
 	auto numFiles = f->Read<uint32_t>();
 	m_files.reserve(numFiles);
 	for(auto i = decltype(numFiles) {0}; i < numFiles; ++i) {
-		m_files.push_back(std::make_shared<uva::FileInfo>());
+		m_files.push_back(std::make_shared<pragma::uva::FileInfo>());
 		auto &fi = m_files.back();
 		auto fh = f->Read<FileHeader>();
-		fi->flags = static_cast<uva::FileInfo::Flags>(fh.flags);
+		fi->flags = static_cast<pragma::uva::FileInfo::Flags>(fh.flags);
 		fi->size = fh.size;
 		fi->sizeUncompressed = fh.sizeUncompressed;
 		fi->offset = fh.offset;
@@ -71,7 +72,7 @@ void uva::ArchiveFile::ReadFiles()
 	}
 }
 
-void uva::ArchiveFile::ReadFileNames()
+void pragma::uva::ArchiveFile::ReadFileNames()
 {
 	auto &f = m_in;
 	if(f == nullptr)
@@ -80,7 +81,7 @@ void uva::ArchiveFile::ReadFileNames()
 		fi->name = f->ReadString();
 }
 
-void uva::ArchiveFile::ReadFileHierarchy()
+void pragma::uva::ArchiveFile::ReadFileHierarchy()
 {
 	auto &f = m_in;
 	if(f == nullptr)
@@ -131,7 +132,7 @@ void uva::ArchiveFile::ReadFileHierarchy()
 	// [fileId] = parentId
 }
 
-void uva::ArchiveFile::ReadFileData(uint64_t startOffset, const uva::FileInfo &fi, std::vector<uint8_t> &data) const
+void pragma::uva::ArchiveFile::ReadFileData(uint64_t startOffset, const pragma::uva::FileInfo &fi, std::vector<uint8_t> &data) const
 {
 	auto &f = m_in;
 	if(f == nullptr)
@@ -151,7 +152,7 @@ static void write_offset(const VFilePtrReal &f, uint64_t startOffset, uint64_t o
 	f->Seek(offset);
 }
 
-void uva::ArchiveFile::WriteHeader(uint64_t &hdVersionOffset, uint64_t &hdFileOffset, uint64_t &hdFileNameOffset, uint64_t &hdHierarchyOffset, uint64_t &hdDataOffset)
+void pragma::uva::ArchiveFile::WriteHeader(uint64_t &hdVersionOffset, uint64_t &hdFileOffset, uint64_t &hdFileNameOffset, uint64_t &hdHierarchyOffset, uint64_t &hdDataOffset)
 {
 	auto &f = m_out;
 	f->Write(ARCHIVE_IDENT.data(), ARCHIVE_IDENT.size());
@@ -169,7 +170,7 @@ void uva::ArchiveFile::WriteHeader(uint64_t &hdVersionOffset, uint64_t &hdFileOf
 	f->Write<uint64_t>(0u); // File data offset
 }
 
-void uva::ArchiveFile::WriteVersionLayer()
+void pragma::uva::ArchiveFile::WriteVersionLayer()
 {
 	auto &f = m_out;
 	f->Write<uint32_t>(static_cast<uint32_t>(m_versions.size()));
@@ -181,7 +182,7 @@ void uva::ArchiveFile::WriteVersionLayer()
 	}
 }
 
-void uva::ArchiveFile::WriteFiles(uint64_t &fileHeaderOffset)
+void pragma::uva::ArchiveFile::WriteFiles(uint64_t &fileHeaderOffset)
 {
 	auto &f = m_out;
 	f->Write<uint32_t>(m_files.size());
@@ -196,7 +197,7 @@ void uva::ArchiveFile::WriteFiles(uint64_t &fileHeaderOffset)
 	}
 }
 
-void uva::ArchiveFile::WriteFileNames(uint64_t startOffset, uint64_t fileHeaderOffset)
+void pragma::uva::ArchiveFile::WriteFileNames(uint64_t startOffset, uint64_t fileHeaderOffset)
 {
 	auto &f = m_out;
 	for(auto i = decltype(m_files.size()) {0}; i < m_files.size(); ++i) {
@@ -206,7 +207,7 @@ void uva::ArchiveFile::WriteFileNames(uint64_t startOffset, uint64_t fileHeaderO
 	}
 }
 
-void uva::ArchiveFile::WriteFileHierarchy()
+void pragma::uva::ArchiveFile::WriteFileHierarchy()
 {
 	auto &f = m_out;
 	std::vector<uint32_t> parentIds(m_files.size(), std::numeric_limits<uint32_t>::max());
@@ -248,7 +249,7 @@ void uva::ArchiveFile::WriteFileHierarchy()
 	}*/
 }
 
-void uva::ArchiveFile::WriteFileData(uint64_t startOffset, uint64_t fileHeaderOffset)
+void pragma::uva::ArchiveFile::WriteFileData(uint64_t startOffset, uint64_t fileHeaderOffset)
 {
 	for(auto i = decltype(m_files.size()) {0}; i < m_files.size(); ++i) {
 		auto &fi = m_files.at(i);
@@ -266,7 +267,7 @@ void uva::ArchiveFile::WriteFileData(uint64_t startOffset, uint64_t fileHeaderOf
 	}
 }
 
-uva::ArchiveFile *uva::ArchiveFile::Open(const std::string &updateFileName, const std::function<bool(VFilePtr &)> &readCallback, const std::function<bool(VFilePtrReal &)> &writeCallback)
+pragma::uva::ArchiveFile *pragma::uva::ArchiveFile::Open(const std::string &updateFileName, const std::function<bool(VFilePtr &)> &readCallback, const std::function<bool(VFilePtrReal &)> &writeCallback)
 {
 	auto in = FileManager::OpenFile<VFilePtrReal>(updateFileName.c_str(), "rb");
 	if(in == nullptr)
@@ -274,15 +275,15 @@ uva::ArchiveFile *uva::ArchiveFile::Open(const std::string &updateFileName, cons
 	return new ArchiveFile(updateFileName, in, readCallback, writeCallback);
 }
 
-uva::ArchiveFile::ArchiveFile(const std::string &updateFileName, VFilePtrReal &f, const std::function<bool(VFilePtr &)> &readCallback, const std::function<bool(VFilePtrReal &)> &writeCallback)
+pragma::uva::ArchiveFile::ArchiveFile(const std::string &updateFileName, VFilePtrReal &f, const std::function<bool(VFilePtr &)> &readCallback, const std::function<bool(VFilePtrReal &)> &writeCallback)
     : m_in(f), m_out(nullptr), m_updateFile(updateFileName), m_fReadCallback(readCallback), m_fWriteCallback(writeCallback)
 {
 	m_root = std::make_shared<FileIndexInfo>();
 
 	if(m_in == nullptr) {
-		m_files.push_back(std::make_shared<uva::FileInfo>());
+		m_files.push_back(std::make_shared<pragma::uva::FileInfo>());
 		auto &fi = m_files.back();
-		fi->flags |= uva::FileInfo::Flags::Directory;
+		fi->flags |= pragma::uva::FileInfo::Flags::Directory;
 		return;
 	}
 	if(m_fReadCallback != nullptr && m_fReadCallback(m_in) == false)
@@ -296,7 +297,7 @@ uva::ArchiveFile::ArchiveFile(const std::string &updateFileName, VFilePtrReal &f
 	ReadFileHierarchy();
 }
 
-uva::ArchiveFile::~ArchiveFile()
+pragma::uva::ArchiveFile::~ArchiveFile()
 {
 	Close();
 	if(m_in != nullptr)
@@ -304,9 +305,9 @@ uva::ArchiveFile::~ArchiveFile()
 	FileManager::RemoveFile((m_updateFile + std::string("_tmp.dat")).c_str());
 }
 
-VFilePtr &uva::ArchiveFile::GetFile() { return m_in; }
+VFilePtr &pragma::uva::ArchiveFile::GetFile() { return m_in; }
 
-void uva::ArchiveFile::GetUpdateFiles(const util::Version &version, std::vector<uint32_t> &updateFiles) const
+void pragma::uva::ArchiveFile::GetUpdateFiles(const util::Version &version, std::vector<uint32_t> &updateFiles) const
 {
 	for(auto &versionOther : m_versions) {
 		if(version >= versionOther.version)
@@ -316,7 +317,7 @@ void uva::ArchiveFile::GetUpdateFiles(const util::Version &version, std::vector<
 			updateFiles.push_back(idx);
 	}
 }
-bool uva::ArchiveFile::Export()
+bool pragma::uva::ArchiveFile::Export()
 {
 	auto updateFileName = m_updateFile;
 	auto tmpName = updateFileName + std::string("_tmp.dat");
@@ -378,13 +379,13 @@ bool uva::ArchiveFile::Export()
 	m_in = FileManager::OpenSystemFile(updateFileName.c_str(), "rb");
 	return r;
 }
-uva::FileInfo *uva::ArchiveFile::AddFile(const std::string &fname)
+pragma::uva::FileInfo *pragma::uva::ArchiveFile::AddFile(const std::string &fname)
 {
 	uint32_t idx = 0;
 	return AddFile(fname, idx);
 }
 
-uva::FileInfo *uva::ArchiveFile::AddFile(const std::string &fname, uint32_t &idx)
+pragma::uva::FileInfo *pragma::uva::ArchiveFile::AddFile(const std::string &fname, uint32_t &idx)
 {
 	auto *fi = FindFile(fname, idx);
 	if(fi != nullptr)
@@ -402,11 +403,11 @@ uva::FileInfo *uva::ArchiveFile::AddFile(const std::string &fname, uint32_t &idx
 		auto &subPath = subPaths.at(subPathIdx);
 		auto it = std::find_if(fii.children.begin(), fii.children.end(), [this, &subPath](const std::shared_ptr<FileIndexInfo> &fii) { return ustring::compare(subPath, m_files.at(fii->index)->name, false); });
 		if(it == fii.children.end()) {
-			m_files.push_back(std::make_shared<uva::FileInfo>());
+			m_files.push_back(std::make_shared<pragma::uva::FileInfo>());
 			auto &fi = m_files.back();
 			fi->name = subPath;
 			if(subPathIdx < subPaths.size() - 1)
-				fi->flags |= uva::FileInfo::Flags::Directory;
+				fi->flags |= pragma::uva::FileInfo::Flags::Directory;
 
 			fii.children.push_back(std::make_shared<FileIndexInfo>());
 			fii.children.back()->parent = fii.shared_from_this();
@@ -418,25 +419,25 @@ uva::FileInfo *uva::ArchiveFile::AddFile(const std::string &fname, uint32_t &idx
 	auto *fii = fAddFile(*m_root, 0);
 	idx = fii->index;
 	return m_files.at(fii->index).get();
-	/*std::function<uva::FileInfo*(uva::FileInfo&,std::vector<std::string>&)> fCreatePath = nullptr;
-	fCreatePath = [this,&fCreatePath,&idx,bIsDir](uva::FileInfo &fi,std::vector<std::string> &subPaths) -> uva::FileInfo* {
+	/*std::function<pragma::uva::FileInfo*(pragma::uva::FileInfo&,std::vector<std::string>&)> fCreatePath = nullptr;
+	fCreatePath = [this,&fCreatePath,&idx,bIsDir](pragma::uva::FileInfo &fi,std::vector<std::string> &subPaths) -> pragma::uva::FileInfo* {
 		if(subPaths.empty() == true)
 		{
 			if(bIsDir == false)
-				fi.flags &= ~uva::FileInfo::Flags::Directory;
+				fi.flags &= ~pragma::uva::FileInfo::Flags::Directory;
 			return &fi;
 		}
 		auto &path = subPaths.front();
-		auto it = std::find_if(fi.children.begin(),fi.children.end(),[&path](const std::shared_ptr<uva::FileInfo> &fiOther) {
+		auto it = std::find_if(fi.children.begin(),fi.children.end(),[&path](const std::shared_ptr<pragma::uva::FileInfo> &fiOther) {
 			return ustring::compare(path,fiOther->name,false);
 		});
 		if(it == fi.children.end())
 		{
-			fi.children.push_back(std::make_shared<uva::FileInfo>());
+			fi.children.push_back(std::make_shared<pragma::uva::FileInfo>());
 			it = fi.children.end() -1;
 			(*it)->parent = fi.shared_from_this();
 			(*it)->name = path;
-			(*it)->flags |= uva::FileInfo::Flags::Directory;
+			(*it)->flags |= pragma::uva::FileInfo::Flags::Directory;
 			(*it)->index = idx;
 			if(idx >= m_indexedFiles.size())
 				m_indexedFiles.resize(idx +1);
@@ -450,7 +451,7 @@ uva::FileInfo *uva::ArchiveFile::AddFile(const std::string &fname, uint32_t &idx
 	return fCreatePath(*m_root,subPaths);*/
 }
 
-bool uva::ArchiveFile::ExtractAndDecompress(const uva::FileInfo &fi, std::vector<uint8_t> &data) const
+bool pragma::uva::ArchiveFile::ExtractAndDecompress(const pragma::uva::FileInfo &fi, std::vector<uint8_t> &data) const
 {
 	std::vector<uint8_t> compressedData;
 	ReadFileData(m_inFileStartOffset, fi, compressedData);
@@ -468,7 +469,7 @@ bool uva::ArchiveFile::ExtractAndDecompress(const uva::FileInfo &fi, std::vector
 	return false;
 }
 
-bool uva::ArchiveFile::Extract(const uva::FileInfo &fi, const std::string &outName) const
+bool pragma::uva::ArchiveFile::Extract(const pragma::uva::FileInfo &fi, const std::string &outName) const
 {
 	std::vector<uint8_t> uncompressedData;
 	if(ExtractAndDecompress(fi, uncompressedData) == false)
@@ -479,7 +480,7 @@ bool uva::ArchiveFile::Extract(const uva::FileInfo &fi, const std::string &outNa
 	return true;
 }
 
-bool uva::ArchiveFile::ExtractData(const std::string &fname, std::vector<uint8_t> &data) const
+bool pragma::uva::ArchiveFile::ExtractData(const std::string &fname, std::vector<uint8_t> &data) const
 {
 	uint32_t idx = 0;
 	auto *fi = FindFile(fname, idx);
@@ -490,7 +491,7 @@ bool uva::ArchiveFile::ExtractData(const std::string &fname, std::vector<uint8_t
 	return true;
 }
 
-bool uva::ArchiveFile::ExtractFile(const std::string &fname, const std::string &outName) const
+bool pragma::uva::ArchiveFile::ExtractFile(const std::string &fname, const std::string &outName) const
 {
 	uint32_t idx = 0;
 	auto *fi = FindFile(fname, idx);
@@ -499,7 +500,7 @@ bool uva::ArchiveFile::ExtractFile(const std::string &fname, const std::string &
 	return Extract(*fi, outName);
 }
 
-bool uva::ArchiveFile::ExtractFile(const std::string &fname) const
+bool pragma::uva::ArchiveFile::ExtractFile(const std::string &fname) const
 {
 	uint32_t idx = 0;
 	auto *fi = FindFile(fname, idx);
@@ -508,7 +509,7 @@ bool uva::ArchiveFile::ExtractFile(const std::string &fname) const
 	return Extract(*fi, fname);
 }
 
-void uva::ArchiveFile::ExtractAll(const std::string &path) const
+void pragma::uva::ArchiveFile::ExtractAll(const std::string &path) const
 {
 	if(m_files.empty() == true)
 		return;
@@ -516,8 +517,8 @@ void uva::ArchiveFile::ExtractAll(const std::string &path) const
 	auto c = FileManager::GetDirectorySeparator();
 	if(npath.empty() == true || npath.back() != c)
 		npath += c;
-	std::function<void(uva::ArchiveFile::FileIndexInfo &, const std::string &)> fExtractFiles = nullptr;
-	fExtractFiles = [this, &npath, &fExtractFiles](uva::ArchiveFile::FileIndexInfo &fii, const std::string &path) {
+	std::function<void(pragma::uva::ArchiveFile::FileIndexInfo &, const std::string &)> fExtractFiles = nullptr;
+	fExtractFiles = [this, &npath, &fExtractFiles](pragma::uva::ArchiveFile::FileIndexInfo &fii, const std::string &path) {
 		auto &fi = m_files.at(fii.index);
 		auto fpath = path + fi->name;
 		if(fi->IsFile()) {
@@ -540,13 +541,13 @@ void uva::ArchiveFile::ExtractAll(const std::string &path) const
 	fExtractFiles(*m_root, npath);
 }
 
-uva::FileInfo *uva::ArchiveFile::FindFile(const std::string &fname) const
+pragma::uva::FileInfo *pragma::uva::ArchiveFile::FindFile(const std::string &fname) const
 {
 	uint32_t idx;
 	return FindFile(fname, idx);
 }
 
-uva::FileInfo *uva::ArchiveFile::FindFile(const std::string &fname, uint32_t &idx) const
+pragma::uva::FileInfo *pragma::uva::ArchiveFile::FindFile(const std::string &fname, uint32_t &idx) const
 {
 	//if(*fi != P_OS::All && *fi != os)
 	//	return nullptr;
@@ -575,7 +576,7 @@ uva::FileInfo *uva::ArchiveFile::FindFile(const std::string &fname, uint32_t &id
 	return m_files.at(fii->index).get();
 }
 
-void uva::ArchiveFile::SearchFiles(const std::string &searchPattern, std::vector<uva::FileInfo *> &results) const
+void pragma::uva::ArchiveFile::SearchFiles(const std::string &searchPattern, std::vector<pragma::uva::FileInfo *> &results) const
 {
 	auto nname = FileManager::GetCanonicalizedPath(searchPattern);
 	std::vector<std::string> subPaths;
@@ -600,14 +601,14 @@ void uva::ArchiveFile::SearchFiles(const std::string &searchPattern, std::vector
 	fFindFiles(*m_root, 0);
 }
 
-const std::vector<std::shared_ptr<uva::FileInfo>> &uva::ArchiveFile::GetFiles() const { return m_files; }
-std::shared_ptr<uva::FileInfo> uva::ArchiveFile::GetByIndex(uint32_t idx)
+const std::vector<std::shared_ptr<pragma::uva::FileInfo>> &pragma::uva::ArchiveFile::GetFiles() const { return m_files; }
+std::shared_ptr<pragma::uva::FileInfo> pragma::uva::ArchiveFile::GetByIndex(uint32_t idx)
 {
 	if(idx >= m_files.size())
 		return nullptr;
 	return m_files.at(idx);
 }
-uva::ArchiveFile::FileIndexInfo *uva::ArchiveFile::FindFileIndexInfo(FileInfo &fi) const
+pragma::uva::ArchiveFile::FileIndexInfo *pragma::uva::ArchiveFile::FindFileIndexInfo(FileInfo &fi) const
 {
 	auto it = std::find_if(m_files.begin(), m_files.end(), [&fi](const std::shared_ptr<FileInfo> &fiOther) { return (&fi == fiOther.get()) ? true : false; });
 	if(it == m_files.end())
@@ -626,7 +627,7 @@ uva::ArchiveFile::FileIndexInfo *uva::ArchiveFile::FindFileIndexInfo(FileInfo &f
 	};
 	return fFindIndexInfo(*m_root);
 }
-std::string uva::ArchiveFile::GetFullPath(FileIndexInfo *fii) const
+std::string pragma::uva::ArchiveFile::GetFullPath(FileIndexInfo *fii) const
 {
 	auto *fi = m_files.at(fii->index).get();
 	auto path = fi->name;
@@ -638,7 +639,7 @@ std::string uva::ArchiveFile::GetFullPath(FileIndexInfo *fii) const
 	return path;
 }
 
-void uva::ArchiveFile::AddVersion(VersionInfo &newVersion)
+void pragma::uva::ArchiveFile::AddVersion(VersionInfo &newVersion)
 {
 	// Remove files of new update from older version infos
 	auto &versions = GetVersions();
@@ -658,7 +659,7 @@ void uva::ArchiveFile::AddVersion(VersionInfo &newVersion)
 	versions.push_front(newVersion);
 }
 
-void uva::ArchiveFile::Close()
+void pragma::uva::ArchiveFile::Close()
 {
 	if(m_in != nullptr)
 		m_in = nullptr;
@@ -666,7 +667,7 @@ void uva::ArchiveFile::Close()
 		m_out = nullptr;
 }
 
-bool uva::ArchiveFile::GetLatestVersion(util::Version *version)
+bool pragma::uva::ArchiveFile::GetLatestVersion(util::Version *version)
 {
 	if(m_versions.empty())
 		return false;
@@ -675,5 +676,5 @@ bool uva::ArchiveFile::GetLatestVersion(util::Version *version)
 	return true;
 }
 
-uva::ArchiveFile::FileIndexInfo &uva::ArchiveFile::GetRoot() { return *m_root; }
-std::deque<VersionInfo> &uva::ArchiveFile::GetVersions() { return m_versions; }
+pragma::uva::ArchiveFile::FileIndexInfo &pragma::uva::ArchiveFile::GetRoot() { return *m_root; }
+std::deque<pragma::uva::VersionInfo> &pragma::uva::ArchiveFile::GetVersions() { return m_versions; }

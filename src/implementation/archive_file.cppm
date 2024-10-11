@@ -2,18 +2,20 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-#ifndef __UVA_ARCHIVE_FILE_HPP__
-#define __UVA_ARCHIVE_FILE_HPP__
+module;
 
 #include <string>
 #include <fsys/filesystem.h>
 #include <deque>
 #include <sharedutils/util_version.h>
-#include "uva_fileinfo.hpp"
-#include "uva_version_info.hpp"
-#include "uva_definitions.hpp"
+#include "definitions.hpp"
 
-namespace uva {
+export module pragma.uva:archive_file;
+
+import :version_info;
+import :fileinfo;
+
+export namespace pragma::uva {
 	class DLLUVA ArchiveFile {
 	  public:
 		struct FileIndexInfo : public std::enable_shared_from_this<FileIndexInfo> {
@@ -98,5 +100,3 @@ namespace uva {
 		void Close();
 	};
 };
-
-#endif
