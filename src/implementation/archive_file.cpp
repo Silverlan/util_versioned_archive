@@ -6,9 +6,12 @@ module;
 
 #include <array>
 #include <sharedutils/util_string.h>
+#include <sharedutils/util_version.h>
 #include <fsys/vfileptr.h>
+#include <fsys/filesystem.h>
 #include <iostream>
 #include <cstring>
+#include <deque>
 #include "bzlib_wrapper.hpp"
 
 module pragma.uva;

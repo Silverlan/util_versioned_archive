@@ -6,6 +6,7 @@ module;
 
 #include <vector>
 #include <sharedutils/util_version.h>
+#include <cinttypes>
 
 export module pragma.uva:version_info;
 

@@ -9,6 +9,8 @@ module;
 
 module pragma.uva;
 
+import :os_info;
+
 std::string pragma::uva::p_os_to_string(P_OS os)
 {
 	switch(os) {

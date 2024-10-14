@@ -10,6 +10,8 @@ module;
 
 module pragma.uva;
 
+import :os_info;
+
 pragma::uva::FileInfo::Flags pragma::uva::FileInfo::os_to_flags(P_OS os)
 {
 	switch(os) {
