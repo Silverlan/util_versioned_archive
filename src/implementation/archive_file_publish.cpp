@@ -49,8 +49,8 @@ std::string pragma::uva::ArchiveFile::result_code_to_string(UpdateResult code)
 	}
 }
 
-pragma::uva::ArchiveFile::UpdateResult pragma::uva::ArchiveFile::PublishUpdate(const std::string &filePath, util::Version &version, std::vector<PublishInfo> &files, const std::string &updateFile, const std::function<bool(VFilePtr &)> &readCallback, const std::function<bool(VFilePtrReal &)> &writeCallback,
-  const std::function<void(std::string &, std::string &, std::vector<uint8_t> &)> &dataTranslateCallback)
+pragma::uva::ArchiveFile::UpdateResult pragma::uva::ArchiveFile::PublishUpdate(const std::string &filePath, util::Version &version, std::vector<PublishInfo> &files, const std::string &updateFile, const std::function<bool(VFilePtr &)> &readCallback,
+  const std::function<bool(VFilePtrReal &)> &writeCallback, const std::function<void(std::string &, std::string &, std::vector<uint8_t> &)> &dataTranslateCallback)
 {
 	auto f = std::unique_ptr<ArchiveFile>(pragma::uva::ArchiveFile::Open(updateFile, readCallback, writeCallback));
 	if(f == nullptr)

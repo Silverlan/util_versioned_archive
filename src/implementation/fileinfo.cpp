@@ -56,7 +56,7 @@ bool pragma::uva::FileInfo::operator==(P_OS os) const
 bool pragma::uva::FileInfo::operator!=(P_OS os) const { return !(*this == os); }
 
 pragma::uva::PublishInfo::PublishInfo(const std::string &_file, P_OS _os, const std::string &_src) : file(_file), os(_os), src(_src) {}
-bool pragma::uva::PublishInfo::operator == (const PublishInfo &other) const { return (this->file == other.file && this->os == other.os) ? true : false; }
+bool pragma::uva::PublishInfo::operator==(const PublishInfo &other) const { return (this->file == other.file && this->os == other.os) ? true : false; }
 bool pragma::uva::PublishInfo::operator!=(const PublishInfo &other) const { return (*this == other) ? false : true; }
 bool pragma::uva::PublishInfo::operator==(const std::string &str) const { return (this->file == str) ? true : false; }
 bool pragma::uva::PublishInfo::operator!=(const std::string &str) const { return (*this == str) ? false : true; }
