@@ -8,11 +8,11 @@ module;
 #include <memory>
 #include <vector>
 #include <cinttypes>
-#include <mathutil/umath.h>
 
 export module pragma.uva:fileinfo;
 
 import :os_info;
+import pragma.math;
 
 export namespace pragma::uva {
 	struct DLLUVA FileInfo {
@@ -34,8 +34,14 @@ export namespace pragma::uva {
 		bool operator==(P_OS os) const;
 		bool operator!=(P_OS os) const;
 	};
+	using namespace umath::scoped_enum::bitwise;
 };
-export { REGISTER_BASIC_BITWISE_OPERATORS(pragma::uva::FileInfo::Flags); };
+export {
+	namespace umath::scoped_enum::bitwise {
+		template<>
+		struct enable_bitwise_operators<pragma::uva::FileInfo::Flags> : std::true_type {};
+	}
+};
 
 namespace pragma::uva {
 	struct PublishInfo {

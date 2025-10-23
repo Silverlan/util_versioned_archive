@@ -4,15 +4,16 @@
 module;
 
 #include <string>
-#include <fsys/filesystem.h>
 #include <deque>
-#include <sharedutils/util_version.h>
+#include <memory>
+#include <functional>
 #include "definitions.hpp"
 
 export module pragma.uva:archive_file;
 
 import :version_info;
 import :fileinfo;
+export import pragma.filesystem;
 
 export namespace pragma::uva {
 	class DLLUVA ArchiveFile {

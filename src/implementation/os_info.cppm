@@ -3,7 +3,6 @@
 
 module;
 
-#include <sharedutils/util.h>
 #include <string>
 #include <cinttypes>
 
