@@ -7,6 +7,8 @@ module;
 #include <iostream>
 #include <cstring>
 #include <deque>
+#include <memory>
+#include <cinttypes>
 #include <functional>
 #include "bzlib_wrapper.hpp"
 

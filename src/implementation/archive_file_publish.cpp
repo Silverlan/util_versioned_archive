@@ -5,6 +5,7 @@ module;
 
 #include <iostream>
 #include <functional>
+#include <memory>
 /*#pragma warning(disable: 4307)
 #pragma warning(disable: 4800)
 #pragma warning(disable: 4701)
