@@ -4,10 +4,6 @@
 module;
 
 #include "definitions.hpp"
-#include <string>
-#include <memory>
-#include <vector>
-#include <cinttypes>
 
 export module pragma.uva:fileinfo;
 

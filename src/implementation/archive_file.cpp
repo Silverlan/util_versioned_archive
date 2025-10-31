@@ -3,14 +3,8 @@
 
 module;
 
-#include <array>
-#include <iostream>
-#include <cstring>
-#include <deque>
-#include <memory>
-#include <cinttypes>
-#include <functional>
 #include "bzlib_wrapper.hpp"
+#include <cstddef>
 
 module pragma.uva;
 

@@ -3,8 +3,6 @@
 
 module;
 
-#include <vector>
-#include <cinttypes>
 
 export module pragma.uva:version_info;
 

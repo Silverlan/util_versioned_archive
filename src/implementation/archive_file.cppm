@@ -3,10 +3,6 @@
 
 module;
 
-#include <string>
-#include <deque>
-#include <memory>
-#include <functional>
 #include "definitions.hpp"
 
 export module pragma.uva:archive_file;
