@@ -3,7 +3,6 @@
 
 module;
 
-
 #undef WIN32
 #undef WIN64
 

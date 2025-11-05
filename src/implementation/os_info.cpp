@@ -3,7 +3,6 @@
 
 module;
 
-
 module pragma.uva;
 
 import :os_info;

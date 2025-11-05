@@ -3,7 +3,6 @@
 
 module;
 
-
 export module pragma.uva:version_info;
 
 export import pragma.util;
