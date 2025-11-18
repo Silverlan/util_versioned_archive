@@ -3,17 +3,14 @@
 
 module;
 
-#include <array>
-#include <sharedutils/util_string.h>
-#include <sharedutils/util_version.h>
-#include <fsys/vfileptr.h>
-#include <fsys/filesystem.h>
-#include <iostream>
-#include <cstring>
-#include <deque>
 #include "bzlib_wrapper.hpp"
+#include <cstddef>
 
 module pragma.uva;
+
+import pragma.filesystem;
+
+#undef max
 
 const std::array<char, 5> ARCHIVE_IDENT = {'V', 'A', 'R', 'C', 'H'};
 const uint32_t ARCHIVE_VERSION = 1;

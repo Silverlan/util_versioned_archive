@@ -3,14 +3,12 @@
 
 module;
 
-#include <sharedutils/util.h>
-#include <string>
-#include <cinttypes>
-
 #undef WIN32
 #undef WIN64
 
 export module pragma.uva:os_info;
+
+export import std.compat;
 
 export namespace pragma::uva {
 	enum class P_OS : uint8_t { Invalid = 0, All, Win32, Win64, Lin32, Lin64 };

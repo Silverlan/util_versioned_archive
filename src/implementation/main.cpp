@@ -4,7 +4,6 @@
 #ifdef UVA_EXE
 #include "util_versioned_archive.hpp"
 #include "uva_archive_file.hpp"
-#include <iostream>
 
 int main(int argc, char *argv[])
 {

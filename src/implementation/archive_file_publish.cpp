@@ -3,12 +3,6 @@
 
 module;
 
-#include <sharedutils/util_file.h>
-#include <sharedutils/util_string.h>
-#include <sharedutils/util_version.h>
-#include <fsys/vfileptr.h>
-#include <fsys/filesystem.h>
-#include <iostream>
 /*#pragma warning(disable: 4307)
 #pragma warning(disable: 4800)
 #pragma warning(disable: 4701)
@@ -22,7 +16,6 @@ module;
 #include "bzlib_wrapper.hpp"
 
 #ifdef UVA_VERBOSE
-#include <iostream>
 #endif
 
 module pragma.uva;
