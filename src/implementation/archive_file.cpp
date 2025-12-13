@@ -60,10 +60,10 @@ void pragma::uva::ArchiveFile::ReadFiles()
 	auto numFiles = f->Read<uint32_t>();
 	m_files.reserve(numFiles);
 	for(auto i = decltype(numFiles) {0}; i < numFiles; ++i) {
-		m_files.push_back(std::make_shared<pragma::uva::FileInfo>());
+		m_files.push_back(std::make_shared<FileInfo>());
 		auto &fi = m_files.back();
 		auto fh = f->Read<FileHeader>();
-		fi->flags = static_cast<pragma::uva::FileInfo::Flags>(fh.flags);
+		fi->flags = static_cast<FileInfo::Flags>(fh.flags);
 		fi->size = fh.size;
 		fi->sizeUncompressed = fh.sizeUncompressed;
 		fi->offset = fh.offset;
@@ -131,7 +131,7 @@ void pragma::uva::ArchiveFile::ReadFileHierarchy()
 	// [fileId] = parentId
 }
 
-void pragma::uva::ArchiveFile::ReadFileData(uint64_t startOffset, const pragma::uva::FileInfo &fi, std::vector<uint8_t> &data) const
+void pragma::uva::ArchiveFile::ReadFileData(uint64_t startOffset, const FileInfo &fi, std::vector<uint8_t> &data) const
 {
 	auto &f = m_in;
 	if(f == nullptr)
@@ -143,7 +143,7 @@ void pragma::uva::ArchiveFile::ReadFileData(uint64_t startOffset, const pragma::
 	f->Seek(offset);
 }
 
-static void write_offset(const VFilePtrReal &f, uint64_t startOffset, uint64_t offsetToOffsetLocation)
+static void write_offset(const pragma::fs::VFilePtrReal &f, uint64_t startOffset, uint64_t offsetToOffsetLocation)
 {
 	auto offset = f->Tell();
 	f->Seek(offsetToOffsetLocation);
@@ -188,7 +188,7 @@ void pragma::uva::ArchiveFile::WriteFiles(uint64_t &fileHeaderOffset)
 	fileHeaderOffset = f->Tell();
 	for(auto &fi : m_files) {
 		FileHeader fh {};
-		fh.flags = umath::to_integral(fi->flags);
+		fh.flags = math::to_integral(fi->flags);
 		fh.size = fi->size;
 		fh.sizeUncompressed = fi->sizeUncompressed;
 		fh.crc = fi->crc;
@@ -266,23 +266,23 @@ void pragma::uva::ArchiveFile::WriteFileData(uint64_t startOffset, uint64_t file
 	}
 }
 
-pragma::uva::ArchiveFile *pragma::uva::ArchiveFile::Open(const std::string &updateFileName, const std::function<bool(VFilePtr &)> &readCallback, const std::function<bool(VFilePtrReal &)> &writeCallback)
+pragma::uva::ArchiveFile *pragma::uva::ArchiveFile::Open(const std::string &updateFileName, const std::function<bool(fs::VFilePtr &)> &readCallback, const std::function<bool(fs::VFilePtrReal &)> &writeCallback)
 {
-	auto in = FileManager::OpenFile<VFilePtrReal>(updateFileName.c_str(), "rb");
+	auto in = fs::open_file<fs::VFilePtrReal>(updateFileName.c_str(), fs::FileMode::Read | fs::FileMode::Binary);
 	if(in == nullptr)
-		in = FileManager::OpenSystemFile(updateFileName.c_str(), "rb");
+		in = fs::open_system_file(updateFileName.c_str(), fs::FileMode::Read | fs::FileMode::Binary);
 	return new ArchiveFile(updateFileName, in, readCallback, writeCallback);
 }
 
-pragma::uva::ArchiveFile::ArchiveFile(const std::string &updateFileName, VFilePtrReal &f, const std::function<bool(VFilePtr &)> &readCallback, const std::function<bool(VFilePtrReal &)> &writeCallback)
+pragma::uva::ArchiveFile::ArchiveFile(const std::string &updateFileName, fs::VFilePtrReal &f, const std::function<bool(fs::VFilePtr &)> &readCallback, const std::function<bool(fs::VFilePtrReal &)> &writeCallback)
     : m_in(f), m_out(nullptr), m_updateFile(updateFileName), m_fReadCallback(readCallback), m_fWriteCallback(writeCallback)
 {
 	m_root = std::make_shared<FileIndexInfo>();
 
 	if(m_in == nullptr) {
-		m_files.push_back(std::make_shared<pragma::uva::FileInfo>());
+		m_files.push_back(std::make_shared<FileInfo>());
 		auto &fi = m_files.back();
-		fi->flags |= pragma::uva::FileInfo::Flags::Directory;
+		fi->flags |= FileInfo::Flags::Directory;
 		return;
 	}
 	if(m_fReadCallback != nullptr && m_fReadCallback(m_in) == false)
@@ -301,10 +301,10 @@ pragma::uva::ArchiveFile::~ArchiveFile()
 	Close();
 	if(m_in != nullptr)
 		m_in = nullptr;
-	FileManager::RemoveFile((m_updateFile + std::string("_tmp.dat")).c_str());
+	fs::remove_file((m_updateFile + std::string("_tmp.dat")));
 }
 
-VFilePtr &pragma::uva::ArchiveFile::GetFile() { return m_in; }
+pragma::fs::VFilePtr &pragma::uva::ArchiveFile::GetFile() { return m_in; }
 
 void pragma::uva::ArchiveFile::GetUpdateFiles(const util::Version &version, std::vector<uint32_t> &updateFiles) const
 {
@@ -320,11 +320,11 @@ bool pragma::uva::ArchiveFile::Export()
 {
 	auto updateFileName = m_updateFile;
 	auto tmpName = updateFileName + std::string("_tmp.dat");
-	auto f = FileManager::OpenFile<VFilePtrReal>(tmpName.c_str(), "wb");
+	auto f = fs::open_file<fs::VFilePtrReal>(tmpName.c_str(), fs::FileMode::Write | fs::FileMode::Binary);
 	if(f == nullptr)
-		f = FileManager::OpenSystemFile(tmpName.c_str(), "wb");
+		f = fs::open_system_file(tmpName.c_str(), fs::FileMode::Write | fs::FileMode::Binary);
 	else
-		updateFileName = FileManager::GetProgramPath() + FileManager::GetDirectorySeparator() + updateFileName;
+		updateFileName = fs::get_program_path() + fs::get_directory_separator() + updateFileName;
 	if(f == nullptr)
 		return false;
 	m_out = f;
@@ -369,13 +369,13 @@ bool pragma::uva::ArchiveFile::Export()
 	f = nullptr;
 
 	auto r = true;
-	if(FileManager::ExistsSystem((updateFileName + std::string("_bak.dat")).c_str()))
-		r = FileManager::RemoveSystemFile((updateFileName + std::string("_bak.dat")).c_str());
-	if(r == true && FileManager::ExistsSystem(updateFileName.c_str()))
-		r = FileManager::RenameSystemFile(updateFileName.c_str(), (updateFileName + std::string("_bak.dat")).c_str());
+	if(fs::exists_system((updateFileName + std::string("_bak.dat"))))
+		r = fs::remove_system_file((updateFileName + std::string("_bak.dat")));
+	if(r == true && fs::exists_system(updateFileName))
+		r = fs::rename_system_file(updateFileName, (updateFileName + std::string("_bak.dat")));
 	if(r == true)
-		r = FileManager::RenameSystemFile((updateFileName + std::string("_tmp.dat")).c_str(), updateFileName.c_str());
-	m_in = FileManager::OpenSystemFile(updateFileName.c_str(), "rb");
+		r = fs::rename_system_file((updateFileName + std::string("_tmp.dat")), updateFileName);
+	m_in = fs::open_system_file(updateFileName, fs::FileMode::Read | fs::FileMode::Binary);
 	return r;
 }
 pragma::uva::FileInfo *pragma::uva::ArchiveFile::AddFile(const std::string &fname)
@@ -390,23 +390,23 @@ pragma::uva::FileInfo *pragma::uva::ArchiveFile::AddFile(const std::string &fnam
 	if(fi != nullptr)
 		return fi;
 	idx = 0;
-	auto bIsDir = FileManager::IsDir(fname);
-	auto npath = FileManager::GetCanonicalizedPath(fname);
+	auto bIsDir = fs::is_dir(fname);
+	auto npath = fs::get_canonicalized_path(fname);
 	std::vector<std::string> subPaths;
-	ustring::explode(npath, std::string(1, FileManager::GetDirectorySeparator()).c_str(), subPaths);
+	string::explode(npath, std::string(1, fs::get_directory_separator()).c_str(), subPaths);
 	if(subPaths.empty() == true)
 		return nullptr;
 
 	std::function<FileIndexInfo *(FileIndexInfo &, uint32_t)> fAddFile = nullptr;
 	fAddFile = [this, &fAddFile, &subPaths](FileIndexInfo &fii, uint32_t subPathIdx) -> FileIndexInfo * {
 		auto &subPath = subPaths.at(subPathIdx);
-		auto it = std::find_if(fii.children.begin(), fii.children.end(), [this, &subPath](const std::shared_ptr<FileIndexInfo> &fii) { return ustring::compare(subPath, m_files.at(fii->index)->name, false); });
+		auto it = std::find_if(fii.children.begin(), fii.children.end(), [this, &subPath](const std::shared_ptr<FileIndexInfo> &fii) { return string::compare(subPath, m_files.at(fii->index)->name, false); });
 		if(it == fii.children.end()) {
-			m_files.push_back(std::make_shared<pragma::uva::FileInfo>());
+			m_files.push_back(std::make_shared<FileInfo>());
 			auto &fi = m_files.back();
 			fi->name = subPath;
 			if(subPathIdx < subPaths.size() - 1)
-				fi->flags |= pragma::uva::FileInfo::Flags::Directory;
+				fi->flags |= FileInfo::Flags::Directory;
 
 			fii.children.push_back(std::make_shared<FileIndexInfo>());
 			fii.children.back()->parent = fii.shared_from_this();
@@ -428,7 +428,7 @@ pragma::uva::FileInfo *pragma::uva::ArchiveFile::AddFile(const std::string &fnam
 		}
 		auto &path = subPaths.front();
 		auto it = std::find_if(fi.children.begin(),fi.children.end(),[&path](const std::shared_ptr<pragma::uva::FileInfo> &fiOther) {
-			return ustring::compare(path,fiOther->name,false);
+			return pragma::string::compare(path,fiOther->name,false);
 		});
 		if(it == fi.children.end())
 		{
@@ -450,7 +450,7 @@ pragma::uva::FileInfo *pragma::uva::ArchiveFile::AddFile(const std::string &fnam
 	return fCreatePath(*m_root,subPaths);*/
 }
 
-bool pragma::uva::ArchiveFile::ExtractAndDecompress(const pragma::uva::FileInfo &fi, std::vector<uint8_t> &data) const
+bool pragma::uva::ArchiveFile::ExtractAndDecompress(const FileInfo &fi, std::vector<uint8_t> &data) const
 {
 	std::vector<uint8_t> compressedData;
 	ReadFileData(m_inFileStartOffset, fi, compressedData);
@@ -468,12 +468,12 @@ bool pragma::uva::ArchiveFile::ExtractAndDecompress(const pragma::uva::FileInfo 
 	return false;
 }
 
-bool pragma::uva::ArchiveFile::Extract(const pragma::uva::FileInfo &fi, const std::string &outName) const
+bool pragma::uva::ArchiveFile::Extract(const FileInfo &fi, const std::string &outName) const
 {
 	std::vector<uint8_t> uncompressedData;
 	if(ExtractAndDecompress(fi, uncompressedData) == false)
 		return false;
-	auto f = FileManager::OpenSystemFile(outName.c_str(), "wb");
+	auto f = fs::open_system_file(outName, fs::FileMode::Write | fs::FileMode::Binary);
 	if(f != nullptr)
 		f->Write(uncompressedData.data(), uncompressedData.size());
 	return true;
@@ -512,12 +512,12 @@ void pragma::uva::ArchiveFile::ExtractAll(const std::string &path) const
 {
 	if(m_files.empty() == true)
 		return;
-	auto npath = FileManager::GetCanonicalizedPath(path);
-	auto c = FileManager::GetDirectorySeparator();
+	auto npath = fs::get_canonicalized_path(path);
+	auto c = fs::get_directory_separator();
 	if(npath.empty() == true || npath.back() != c)
 		npath += c;
-	std::function<void(pragma::uva::ArchiveFile::FileIndexInfo &, const std::string &)> fExtractFiles = nullptr;
-	fExtractFiles = [this, &npath, &fExtractFiles](pragma::uva::ArchiveFile::FileIndexInfo &fii, const std::string &path) {
+	std::function<void(FileIndexInfo &, const std::string &)> fExtractFiles = nullptr;
+	fExtractFiles = [this, &npath, &fExtractFiles](FileIndexInfo &fii, const std::string &path) {
 		auto &fi = m_files.at(fii.index);
 		auto fpath = path + fi->name;
 		if(fi->IsFile()) {
@@ -525,8 +525,8 @@ void pragma::uva::ArchiveFile::ExtractAll(const std::string &path) const
 				std::cout << "WARNING: Unable to extract file '" << fpath << "'!" << std::endl;
 		}
 		else {
-			auto lpath = ustring::substr(fpath, path.length());
-			FileManager::CreateSystemPath(path, lpath.c_str());
+			auto lpath = string::substr(fpath, path.length());
+			fs::create_system_path(path, lpath);
 		}
 		if(fii.children.empty() == false) {
 			if(fpath.empty() == false)
@@ -550,9 +550,9 @@ pragma::uva::FileInfo *pragma::uva::ArchiveFile::FindFile(const std::string &fna
 {
 	//if(*fi != P_OS::All && *fi != os)
 	//	return nullptr;
-	auto nname = FileManager::GetCanonicalizedPath(fname);
+	auto nname = fs::get_canonicalized_path(fname);
 	std::vector<std::string> subPaths;
-	ustring::explode(nname, std::string(1, FileManager::GetDirectorySeparator()).c_str(), subPaths);
+	string::explode(nname, std::string(1, fs::get_directory_separator()).c_str(), subPaths);
 
 	std::function<FileIndexInfo *(FileIndexInfo &, uint32_t)> fFindFile = nullptr;
 	fFindFile = [this, &fFindFile, &subPaths](FileIndexInfo &fii, uint32_t subPathIdx) -> FileIndexInfo * {
@@ -561,7 +561,7 @@ pragma::uva::FileInfo *pragma::uva::ArchiveFile::FindFile(const std::string &fna
 		auto &subPath = subPaths.at(subPathIdx);
 		auto it = std::find_if(fii.children.begin(), fii.children.end(), [this, &subPath](const std::shared_ptr<FileIndexInfo> &fii) {
 			auto &fi = m_files.at(fii->index);
-			return ustring::compare(subPath, fi->name, false);
+			return string::compare(subPath, fi->name, false);
 		});
 		if(it == fii.children.end())
 			return nullptr;
@@ -575,11 +575,11 @@ pragma::uva::FileInfo *pragma::uva::ArchiveFile::FindFile(const std::string &fna
 	return m_files.at(fii->index).get();
 }
 
-void pragma::uva::ArchiveFile::SearchFiles(const std::string &searchPattern, std::vector<pragma::uva::FileInfo *> &results) const
+void pragma::uva::ArchiveFile::SearchFiles(const std::string &searchPattern, std::vector<FileInfo *> &results) const
 {
-	auto nname = FileManager::GetCanonicalizedPath(searchPattern);
+	auto nname = fs::get_canonicalized_path(searchPattern);
 	std::vector<std::string> subPaths;
-	ustring::explode(nname, std::string(1, FileManager::GetDirectorySeparator()).c_str(), subPaths);
+	string::explode(nname, std::string(1, fs::get_directory_separator()).c_str(), subPaths);
 
 	std::function<void(FileIndexInfo &, uint32_t)> fFindFiles = nullptr;
 	fFindFiles = [this, &fFindFiles, &subPaths, &results](FileIndexInfo &fii, uint32_t subPathIdx) {
@@ -589,7 +589,7 @@ void pragma::uva::ArchiveFile::SearchFiles(const std::string &searchPattern, std
 		auto bLastIteration = (subPathIdx == subPaths.size() - 1) ? true : false;
 		for(auto &child : fii.children) {
 			auto &fi = m_files.at(child->index);
-			if(ustring::match(fi->name, subPath) == true) {
+			if(string::match(fi->name, subPath) == true) {
 				if(bLastIteration == true)
 					results.push_back(fi.get());
 				else

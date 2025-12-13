@@ -21,13 +21,13 @@ export namespace pragma::uva {
 		};
 		enum class UpdateResult : uint32_t { Success = 0, ListFileNotFound, NothingToUpdate, UnableToCreateArchiveFile, VersionDiscrepancy, UnableToRemoveTemporaryFiles };
 		~ArchiveFile();
-		static ArchiveFile *Open(const std::string &updateFileName, const std::function<bool(VFilePtr &)> &readCallback = nullptr, const std::function<bool(VFilePtrReal &)> &writeCallback = nullptr);
+		static ArchiveFile *Open(const std::string &updateFileName, const std::function<bool(fs::VFilePtr &)> &readCallback = nullptr, const std::function<bool(fs::VFilePtrReal &)> &writeCallback = nullptr);
 		bool GetLatestVersion(util::Version *version);
 		FileIndexInfo &GetRoot();
 		std::deque<VersionInfo> &GetVersions();
 		void AddVersion(VersionInfo &newVersion);
 		bool Export();
-		VFilePtr &GetFile();
+		fs::VFilePtr &GetFile();
 		void GetUpdateFiles(const util::Version &version, std::vector<uint32_t> &updateFiles) const;
 
 		void ExtractAll(const std::string &outPath) const;
@@ -45,7 +45,7 @@ export namespace pragma::uva {
 
 		void SearchFiles(const std::string &searchPattern, std::vector<FileInfo *> &results) const;
 
-		static UpdateResult PublishUpdate(util::Version &version, const std::string &updateListFile, const std::string &archiveFile, const std::function<bool(VFilePtr &)> &readCallback = nullptr, const std::function<bool(VFilePtrReal &)> &writeCallback = nullptr,
+		static UpdateResult PublishUpdate(util::Version &version, const std::string &updateListFile, const std::string &archiveFile, const std::function<bool(fs::VFilePtr &)> &readCallback = nullptr, const std::function<bool(fs::VFilePtrReal &)> &writeCallback = nullptr,
 		  const std::function<void(std::string &, std::string &, std::vector<uint8_t> &)> &dataTranslateCallback = nullptr);
 
 		static std::string result_code_to_string(UpdateResult code);
@@ -60,9 +60,9 @@ export namespace pragma::uva {
 			uint32_t crc = 0;
 		};
 #pragma pack(pop)
-		ArchiveFile(const std::string &updateFileName, VFilePtrReal &f, const std::function<bool(VFilePtr &)> &readCallback = nullptr, const std::function<bool(VFilePtrReal &)> &writeCallback = nullptr);
-		VFilePtr m_in;
-		VFilePtrReal m_out;
+		ArchiveFile(const std::string &updateFileName, fs::VFilePtrReal &f, const std::function<bool(fs::VFilePtr &)> &readCallback = nullptr, const std::function<bool(fs::VFilePtrReal &)> &writeCallback = nullptr);
+		fs::VFilePtr m_in;
+		fs::VFilePtrReal m_out;
 		std::string m_updateFile;
 		std::deque<VersionInfo> m_versions;
 		std::vector<std::shared_ptr<FileInfo>> m_files;
@@ -72,12 +72,12 @@ export namespace pragma::uva {
 		//std::shared_ptr<FileInfo> m_root = nullptr;
 		//std::vector<std::weak_ptr<FileInfo>> m_indexedFiles;
 		//uint32_t m_nextIndex = 1;
-		std::function<bool(VFilePtr &)> m_fReadCallback = nullptr;
-		std::function<bool(VFilePtrReal &)> m_fWriteCallback = nullptr;
+		std::function<bool(fs::VFilePtr &)> m_fReadCallback = nullptr;
+		std::function<bool(fs::VFilePtrReal &)> m_fWriteCallback = nullptr;
 		bool Extract(const FileInfo &fi, const std::string &outName) const;
 		bool ExtractAndDecompress(const FileInfo &fi, std::vector<uint8_t> &data) const;
 		//FileInfo *FindFile(FileInfo *fi,const std::string &fname,P_OS os,uint32_t &idx,uint64_t fnameOffset=0) const;
-		static UpdateResult PublishUpdate(const std::string &filePath, util::Version &version, std::vector<PublishInfo> &files, const std::string &updateFile, const std::function<bool(VFilePtr &)> &readCallback = nullptr, const std::function<bool(VFilePtrReal &)> &writeCallback = nullptr,
+		static UpdateResult PublishUpdate(const std::string &filePath, util::Version &version, std::vector<PublishInfo> &files, const std::string &updateFile, const std::function<bool(fs::VFilePtr &)> &readCallback = nullptr, const std::function<bool(fs::VFilePtrReal &)> &writeCallback = nullptr,
 		  const std::function<void(std::string &, std::string &, std::vector<uint8_t> &)> &dataTranslateCallback = nullptr);
 
 		bool ReadHeader();

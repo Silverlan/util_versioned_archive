@@ -42,10 +42,10 @@ std::string pragma::uva::ArchiveFile::result_code_to_string(UpdateResult code)
 	}
 }
 
-pragma::uva::ArchiveFile::UpdateResult pragma::uva::ArchiveFile::PublishUpdate(const std::string &filePath, util::Version &version, std::vector<PublishInfo> &files, const std::string &updateFile, const std::function<bool(VFilePtr &)> &readCallback,
-  const std::function<bool(VFilePtrReal &)> &writeCallback, const std::function<void(std::string &, std::string &, std::vector<uint8_t> &)> &dataTranslateCallback)
+pragma::uva::ArchiveFile::UpdateResult pragma::uva::ArchiveFile::PublishUpdate(const std::string &filePath, util::Version &version, std::vector<PublishInfo> &files, const std::string &updateFile, const std::function<bool(fs::VFilePtr &)> &readCallback,
+  const std::function<bool(fs::VFilePtrReal &)> &writeCallback, const std::function<void(std::string &, std::string &, std::vector<uint8_t> &)> &dataTranslateCallback)
 {
-	auto f = std::unique_ptr<ArchiveFile>(pragma::uva::ArchiveFile::Open(updateFile, readCallback, writeCallback));
+	auto f = std::unique_ptr<ArchiveFile>(ArchiveFile::Open(updateFile, readCallback, writeCallback));
 	if(f == nullptr)
 		return UpdateResult::UnableToCreateArchiveFile;
 	auto lastVersion = version;
@@ -73,7 +73,7 @@ pragma::uva::ArchiveFile::UpdateResult pragma::uva::ArchiveFile::PublishUpdate(c
 	// Normalize Paths
 	for(auto &f : files) {
 		auto &name = f.file;
-		name = FileManager::GetCanonicalizedPath(name);
+		name = fs::get_canonicalized_path(name);
 		//std::transform(name.begin(),name.end(),name.begin(),::tolower);
 	}
 
@@ -128,7 +128,7 @@ pragma::uva::ArchiveFile::UpdateResult pragma::uva::ArchiveFile::PublishUpdate(c
 		uint64_t size = 0;
 		uint64_t sizeUncompressed = 0;
 		std::vector<uint8_t> data;
-		auto fptr = FileManager::OpenSystemFile(file.file.c_str(), "rb");
+		auto fptr = fs::open_system_file(file.file, fs::FileMode::Read | fs::FileMode::Binary);
 		if(fptr != nullptr) {
 			sizeUncompressed = fptr->GetSize();
 			if(sizeUncompressed == 0) {
@@ -267,14 +267,14 @@ pragma::uva::ArchiveFile::UpdateResult pragma::uva::ArchiveFile::PublishUpdate(c
 
 	// Check for removed files, has to be done after data translation!
 	auto &root = f->GetRoot();
-	std::function<void(pragma::uva::ArchiveFile::FileIndexInfo &, std::string)> fIterateHierarchy = nullptr;
-	fIterateHierarchy = [&fIterateHierarchy, &f, &files, &newVersionInfo, &numDeleted](pragma::uva::ArchiveFile::FileIndexInfo &fii, std::string path) {
+	std::function<void(FileIndexInfo &, std::string)> fIterateHierarchy = nullptr;
+	fIterateHierarchy = [&fIterateHierarchy, &f, &files, &newVersionInfo, &numDeleted](FileIndexInfo &fii, std::string path) {
 		if(path.empty() == false)
 			path += "\\";
 		auto fi = f->GetByIndex(fii.index);
 		path += fi->name;
 		if(fi->IsDirectory() == false && fi->size > 0) {
-			auto it = std::find_if(files.begin(), files.end(), [&path](const PublishInfo &pi) { return ustring::compare(path, pi.GetSourceName(), false); });
+			auto it = std::find_if(files.begin(), files.end(), [&path](const PublishInfo &pi) { return string::compare(path, pi.GetSourceName(), false); });
 			if(it == files.end()) {
 				newVersionInfo.files.push_back(static_cast<unsigned int>(fii.index));
 				fi->size = 0;
@@ -325,17 +325,17 @@ pragma::uva::ArchiveFile::UpdateResult pragma::uva::ArchiveFile::PublishUpdate(c
 
 static void find_all_files(std::string path, const std::function<void(std::string, std::string)> &f)
 {
-	path = FileManager::GetCanonicalizedPath(path);
+	path = pragma::fs::get_canonicalized_path(path);
 	std::vector<std::string> files;
 	std::vector<std::string> dirs;
-	FileManager::FindSystemFiles((path + "/*").c_str(), &files, &dirs);
+	pragma::fs::find_system_files((path + "/*"), &files, &dirs);
 	for(auto it = files.begin(); it != files.end(); ++it)
 		f(path + std::string("/"), *it);
 	for(auto it = dirs.begin(); it != dirs.end(); ++it)
 		find_all_files(path + std::string("/") + (*it), f);
 }
 
-pragma::uva::ArchiveFile::UpdateResult pragma::uva::ArchiveFile::PublishUpdate(util::Version &version, const std::string &updateListFile, const std::string &archiveFile, const std::function<bool(VFilePtr &)> &readCallback, const std::function<bool(VFilePtrReal &)> &writeCallback,
+pragma::uva::ArchiveFile::UpdateResult pragma::uva::ArchiveFile::PublishUpdate(util::Version &version, const std::string &updateListFile, const std::string &archiveFile, const std::function<bool(fs::VFilePtr &)> &readCallback, const std::function<bool(fs::VFilePtrReal &)> &writeCallback,
   const std::function<void(std::string &, std::string &, std::vector<uint8_t> &)> &dataTranslateCallback)
 {
 	auto flist = updateListFile;
@@ -343,33 +343,33 @@ pragma::uva::ArchiveFile::UpdateResult pragma::uva::ArchiveFile::PublishUpdate(u
 	if(ufile::get_extension(flist, &ext) == false)
 		flist += ".txt";
 	std::string pathToFiles;
-	auto f = FileManager::OpenFile<VFilePtrReal>(flist.c_str(), "r");
+	auto f = fs::open_file<fs::VFilePtrReal>(flist, fs::FileMode::Read);
 	if(f == nullptr) {
-		f = FileManager::OpenSystemFile(flist.c_str(), "r");
+		f = fs::open_system_file(flist, fs::FileMode::Read);
 		if(f == nullptr)
 			return UpdateResult::ListFileNotFound;
 		pathToFiles = ufile::get_path_from_filename(flist);
 	}
 	else
-		pathToFiles = FileManager::GetProgramPath() + ufile::get_path_from_filename(flist);
-	auto c = FileManager::GetDirectorySeparator();
+		pathToFiles = fs::get_program_path() + ufile::get_path_from_filename(flist);
+	auto c = fs::get_directory_separator();
 	if(pathToFiles.empty() == false && pathToFiles.back() != c)
 		pathToFiles += c;
 	std::vector<PublishInfo> fileInfo;
 	while(!f->Eof()) {
 		std::string l = f->ReadLine();
-		std::vector<std::string> argv = ustring::get_args(l);
+		std::vector<std::string> argv = string::get_args(l);
 		if(!argv.empty()) {
 			auto f = pathToFiles + argv.front();
-			f = FileManager::GetCanonicalizedPath(f);
+			f = fs::get_canonicalized_path(f);
 			std::unordered_map<std::string, std::string> keyvalues;
 			for(auto i = 1; i < argv.size(); i++) {
 				std::string &str = argv[i];
 				std::vector<std::string> strSub;
-				ustring::explode(str, "=", strSub);
+				string::explode(str, "=", strSub);
 				if(strSub.size() > 1) {
-					ustring::remove_whitespace(strSub[0]);
-					ustring::remove_whitespace(strSub[1]);
+					string::remove_whitespace(strSub[0]);
+					string::remove_whitespace(strSub[1]);
 					if(!strSub[0].empty() && !strSub[1].empty())
 						keyvalues.insert(std::unordered_map<std::string, std::string>::value_type(strSub[0], strSub[1]));
 				}
@@ -392,7 +392,7 @@ pragma::uva::ArchiveFile::UpdateResult pragma::uva::ArchiveFile::PublishUpdate(u
 			if(itSrc != keyvalues.end())
 				src = itSrc->second;
 			std::string sub;
-			if(f.length() > 3 && ((sub = f.substr(f.length() - 3)) == "/**" || sub == "\\**") && FileManager::IsSystemDir(f.substr(0, f.length() - 3)) == true) {
+			if(f.length() > 3 && ((sub = f.substr(f.length() - 3)) == "/**" || sub == "\\**") && fs::is_system_dir(f.substr(0, f.length() - 3)) == true) {
 				f = f.substr(0, f.length() - 3);
 				auto fLen = f.length();
 				find_all_files(f, [&fileInfo, &os, &src, &fLen](std::string path, std::string file) {
@@ -402,12 +402,12 @@ pragma::uva::ArchiveFile::UpdateResult pragma::uva::ArchiveFile::PublishUpdate(u
 						if(localPath.back() == '/' || localPath.back() == '\\')
 							localPath = localPath.substr(0, localPath.length() - 1);
 					}
-					fileInfo.push_back(PublishInfo(FileManager::GetCanonicalizedPath(path + file), os, FileManager::GetCanonicalizedPath(src + localPath)));
+					fileInfo.push_back(PublishInfo(fs::get_canonicalized_path(path + file), os, fs::get_canonicalized_path(src + localPath)));
 				});
 			}
 			else {
 				std::vector<std::string> files;
-				FileManager::FindSystemFiles(f.c_str(), &files, nullptr, true);
+				fs::find_system_files(f, &files, nullptr, true);
 				for(auto it = files.begin(); it != files.end(); it++)
 					fileInfo.push_back(PublishInfo(ufile::get_path_from_filename(f) + *it, os, src));
 			}

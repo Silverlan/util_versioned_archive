@@ -31,7 +31,7 @@ export namespace pragma::uva {
 		bool operator==(P_OS os) const;
 		bool operator!=(P_OS os) const;
 	};
-	using namespace umath::scoped_enum::bitwise;
+	using namespace pragma::math::scoped_enum::bitwise;
 };
 export {
 	REGISTER_ENUM_FLAGS(pragma::uva::FileInfo::Flags)
@@ -47,8 +47,8 @@ namespace pragma::uva {
 		bool operator!=(const std::string &str) const;
 		bool operator==(const P_OS &os) const;
 		bool operator!=(const P_OS &os) const;
-		bool operator==(const uva::FileInfo &info) const;
-		bool operator!=(const uva::FileInfo &info) const;
+		bool operator==(const FileInfo &info) const;
+		bool operator!=(const FileInfo &info) const;
 		std::string file;
 		P_OS os = P_OS::All;
 		std::string src;

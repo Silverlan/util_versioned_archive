@@ -58,18 +58,18 @@ bool pragma::uva::PublishInfo::operator==(const std::string &str) const { return
 bool pragma::uva::PublishInfo::operator!=(const std::string &str) const { return (*this == str) ? false : true; }
 bool pragma::uva::PublishInfo::operator==(const P_OS &os) const { return (this->os == os) ? true : false; }
 bool pragma::uva::PublishInfo::operator!=(const P_OS &os) const { return (*this == os) ? false : true; }
-bool pragma::uva::PublishInfo::operator==(const pragma::uva::FileInfo &info) const
+bool pragma::uva::PublishInfo::operator==(const FileInfo &info) const
 {
-	if(pragma::uva::FileInfo::os_to_flags(os) != info.flags)
+	if(FileInfo::os_to_flags(os) != info.flags)
 		return false;
 	std::string name = GetSourceName();
 	return (name == info.name) ? true : false;
 }
-bool pragma::uva::PublishInfo::operator!=(const pragma::uva::FileInfo &info) const { return (*this == info) ? false : true; }
+bool pragma::uva::PublishInfo::operator!=(const FileInfo &info) const { return (*this == info) ? false : true; }
 std::string pragma::uva::PublishInfo::GetSourceName() const
 {
 	std::string name = src;
-	auto bFileName = (name.find_first_of('.') != ustring::NOT_FOUND) ? true : false;
+	auto bFileName = (name.find_first_of('.') != string::NOT_FOUND) ? true : false;
 	if(!name.empty() && bFileName == false) {
 		if(name.back() == '/')
 			name[name.size() - 1] = '\\';
@@ -82,5 +82,5 @@ std::string pragma::uva::PublishInfo::GetSourceName() const
 		name.erase(name.end() - 1);
 	if(bFileName == false)
 		name += ufile::get_file_from_filename(file);
-	return FileManager::GetCanonicalizedPath(name);
+	return fs::get_canonicalized_path(name);
 }

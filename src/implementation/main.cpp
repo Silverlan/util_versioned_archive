@@ -7,11 +7,11 @@
 
 int main(int argc, char *argv[])
 {
-	util::Version version {0, 0, 2};
+	pragma::util::Version version {0, 0, 2};
 	auto r = uva::ArchiveFile::PublishUpdate(version, "updatelist.txt", "versioninfo.dat");
 	std::cout << "Result: " << uva::ArchiveFile::result_code_to_string(r) << std::endl;
 
-	//static bool publish(const util::Version &version,std::string list="updatelist.txt",char *err=nullptr,const std::string &updateFile="versioninfo.dat");
+	//static bool publish(const pragma::util::Version &version,std::string list="updatelist.txt",char *err=nullptr,const std::string &updateFile="versioninfo.dat");
 
 	auto f = std::unique_ptr<uva::ArchiveFile>(uva::ArchiveFile::Open("versioninfo.dat"));
 	auto &versions = f->GetVersions();
